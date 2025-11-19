@@ -1,0 +1,79 @@
+:root{--primary:#007BFF;--muted:#f3f6fb;--card:#fff;--accent:#6b46c1;--success:#16a34a}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;background:var(--muted);color:#222}
+
+/* Header */
+header{position:sticky;top:0;z-index:120;display:flex;align-items:center;justify-content:space-between;background:var(--card);padding:12px 18px;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+.header-left{display:flex;align-items:center;gap:12px}
+.logo{height:42px;cursor:pointer;border-radius:6px}
+.site-title{margin:0;color:var(--primary);font-weight:700;font-size:18px}
+.header-right{display:flex;align-items:center;gap:12px}
+.icon-btn{background:transparent;border:none;cursor:pointer;padding:6px;border-radius:8px}
+.account-bubble{width:36px;height:36px;border-radius:50%;background:#eee;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#444}
+
+/* Main */
+main{max-width:1200px;margin:18px auto;padding:0 18px}
+
+/* Search & categories */
+#search-bar{width:100%;padding:12px;border-radius:10px;border:1px solid #d7e0ea;margin-bottom:14px}
+#category-tabs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+#category-tabs button{background:var(--primary);color:#fff;border:0;padding:8px 14px;border-radius:20px;cursor:pointer;font-weight:600}
+#category-tabs button:hover{background:#005bb5}
+
+/* Grid */
+#products{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+@media(min-width:768px){#products{grid-template-columns:repeat(4,1fr)}}
+
+/* Cards */
+.product-card{background:var(--card);padding:12px;border-radius:12px;box-shadow:0 6px 18px rgba(15,23,42,0.06);transition:transform .12s,box-shadow .12s;position:relative}
+.product-card:hover{transform:translateY(-6px);box-shadow:0 10px 28px rgba(15,23,42,0.08)}
+.product-card img{width:100%;height:170px;object-fit:cover;border-radius:8px;display:block}
+.product-card h3{margin:10px 0 6px;font-size:16px;cursor:pointer}
+.product-card p.price{color:var(--primary);font-weight:700;margin:0 0 10px}
+
+/* Buttons & qty box */
+.card-actions{display:flex;gap:8px;justify-content:center;align-items:center;margin-top:8px}
+.btn{padding:8px 12px;border-radius:8px;border:0;cursor:pointer;font-weight:700;background:#222;color:#fff}
+.btn.buy{background:var(--primary)}
+.qty-box{display:inline-flex;align-items:center;border:1px solid #d7dde6;border-radius:8px;overflow:hidden;background:#fff;font-weight:700}
+.qty-box button{width:36px;height:36px;border:0;background:#f3f4f6;cursor:pointer;font-size:18px}
+.qty-box .qty-number{min-width:38px;text-align:center;padding:6px 8px}
+
+/* Sections */
+.section-card{display:none;background:var(--card);padding:16px;border-radius:12px;box-shadow:0 8px 20px rgba(15,23,42,0.06);margin-top:18px}
+.section-card.show{display:block}
+#product-details img{width:100%;max-width:320px;border-radius:10px;display:block;margin-bottom:12px}
+
+/* Cart */
+.cart-row{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px;border-radius:8px;margin-bottom:10px;border:1px solid #eef2f6}
+.cart-left{display:flex;gap:12px;align-items:center}
+.cart-left img{width:56px;height:56px;object-fit:cover;border-radius:8px}
+.cart-name{font-weight:700}
+.cart-total{text-align:right;font-weight:800;margin-top:14px;font-size:18px}
+
+/* Payment UI */
+.payment-card{display:flex;gap:12px;align-items:center;padding:12px;background:#fff;border-radius:10px;border:1px solid #eceffb;cursor:pointer}
+.payment-details{display:none;margin-top:10px;padding:12px;border-radius:8px;background:#fbfbff;border:1px solid #eef0ff}
+.form-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.form-row input,.form-row select{padding:10px;border-radius:8px;border:1px solid #ddd;min-width:0;flex:1}
+.confirm-banner{margin-top:14px;padding:12px;background:#e6ffed;border:1px solid #b7f5c7;color:#056a2f;border-radius:8px;display:none}
+
+/* Account drawer (D2) */
+#account-drawer{position:fixed;right:-420px;top:0;height:100vh;width:360px;background:var(--card);box-shadow:-12px 0 30px rgba(0,0,0,0.12);transition:right .25s ease;z-index:240;padding:18px;overflow:auto}
+#account-drawer.open{right:0}
+.drawer-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.drawer-title{font-weight:800;color:var(--accent)}
+.close-drawer{background:transparent;border:0;font-size:20px;cursor:pointer}
+.profile-pic{width:84px;height:84px;border-radius:12px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.profile-pic img{width:100%;height:100%;object-fit:cover}
+.input-row{margin:8px 0}
+.input-row label{display:block;font-size:13px;margin-bottom:6px}
+.input-row input,.input-row textarea{width:100%;padding:10px;border-radius:8px;border:1px solid #ddd}
+.input-row input[disabled]{background:#f5f7fb}
+.drawer-actions{display:flex;gap:10px;margin-top:12px}
+.small-muted{font-size:13px;color:#666;margin-top:6px}
+.login-block{margin-top:8px}
+.footer{margin-top:24px;padding:14px;text-align:center;background:#111827;color:#fff;border-radius:6px}
+
+/* Small screens */
+@media(max-width:420px){#account-drawer{width:100%;right:-100%} .product-card img{height:150px} .qty-box button{width:30px;height:30px} .qty-box .qty-number{min-width:30px;padding:6px}}
