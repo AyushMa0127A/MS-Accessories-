@@ -1,435 +1,486 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>MS Accessories – Shop</title>
 
 <style>
-/* GENERAL BODY */
+/* ====== General ====== */
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   margin: 0;
-  background: #f0f4f8;
-  color: #333;
+  background: #f7f8fa;
+  color: #222;
 }
-
-/* HEADER */
 header {
   background: #fff;
-  padding: 15px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  padding: 14px 20px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
   position: sticky;
   top: 0;
   z-index: 100;
 }
+.header-left { display:flex; align-items:center; gap:12px; }
+.logo { height:44px; cursor:pointer; transition:transform .25s ease; }
+.logo:hover { transform: scale(1.05); }
+.site-title { color:#007BFF; font-weight:700; margin:0; font-size:18px; }
+nav a { margin-left:16px; text-decoration:none; font-weight:600; color:#333; }
+main { padding:18px; max-width:1200px; margin:0 auto; }
 
-header img {
-  height: 50px;
-  transition: transform 0.3s ease;
-  cursor: pointer;
-}
+/* search & categories */
+#search-bar { width:100%; padding:12px; border-radius:10px; border:1px solid #d0d7de; margin-bottom:14px; font-size:15px; }
+#category-tabs { margin-bottom:16px; display:flex; gap:10px; flex-wrap:wrap; }
+#category-tabs button { background:#007BFF; color:white; border:none; padding:8px 14px; border-radius:20px; cursor:pointer; font-weight:600; }
+#category-tabs button:hover { background:#005bb5; }
 
-header img:hover {
-  transform: scale(1.1);
-}
-
-nav a {
-  margin-left: 20px;
-  text-decoration: none;
-  font-weight: bold;
-  color: #333;
-  transition: color 0.3s;
-}
-
-nav a:hover {
-  color: #007BFF;
-}
-
-main {
-  padding: 20px;
-}
-
-/* SEARCH BAR */
-#search-bar {
-  width: 100%;
-  padding: 12px;
-  margin-bottom: 20px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  font-size: 16px;
-}
-
-/* CATEGORY TABS */
-#category-tabs {
-  margin-bottom: 20px;
-}
-
-#category-tabs button {
-  padding: 8px 15px;
-  margin-right: 10px;
-  border: none;
-  border-radius: 20px;
-  background: #007BFF;
-  color: white;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-#category-tabs button:hover {
-  background: #0056b3;
-}
-
-/* PRODUCT GRID */
+/* ====== Product Grid: 2 per row on mobile, 4 on desktop ====== */
 #products {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr); /* 2 items per row on mobile */
-  gap: 20px;
+  display:grid;
+  grid-template-columns: repeat(2, 1fr); /* mobile: 2 per row */
+  gap:18px;
+}
+@media (min-width:768px) {
+  #products { grid-template-columns: repeat(4, 1fr); } /* desktop: 4 per row */
 }
 
-@media (min-width: 768px) {
-  #products {
-    grid-template-columns: repeat(4, 1fr); /* 4 items per row on desktop */
-  }
-}
-
+/* product card */
 .product-card {
-  background: #fff;
-  padding: 15px;
-  border-radius: 15px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  text-align: center;
-  transition: transform 0.2s ease;
-  cursor: pointer;
+  background:#fff;
+  border-radius:12px;
+  padding:12px;
+  box-shadow: 0 6px 18px rgba(15,23,42,0.06);
+  transition: transform .15s ease, box-shadow .15s ease;
+  position:relative;
+}
+.product-card:hover { transform: translateY(-6px); box-shadow: 0 10px 30px rgba(15,23,42,0.08); }
+.product-card img { width:100%; height:170px; object-fit:cover; border-radius:8px; display:block; }
+.product-card h3 { margin:10px 0 6px; font-size:16px; cursor:pointer; }
+.product-card p.price { color:#007BFF; font-weight:700; margin:0 0 10px; }
+
+/* buttons - default */
+.card-actions { display:flex; gap:8px; justify-content:center; align-items:center; margin-top:8px; }
+/* Add/Buy buttons */
+.btn { background:#222; color:#fff; padding:8px 12px; border-radius:8px; border:none; cursor:pointer; font-weight:600; }
+.btn.buy { background:#007BFF; }
+.btn:active { transform:translateY(1px); }
+
+/* ===== Box-style counter (B) ===== */
+.qty-box {
+  display:inline-flex;
+  align-items:center;
+  border:1px solid #d0d7de;
+  border-radius:8px;
+  overflow:hidden;
+  background:#fff;
+  font-weight:700;
+}
+.qty-box button {
+  width:34px;
+  height:34px;
+  border:none;
+  background:#f3f4f6;
+  cursor:pointer;
+  font-size:18px;
+}
+.qty-box .qty-number {
+  min-width:36px;
+  text-align:center;
+  padding:6px 8px;
+  font-size:15px;
 }
 
-.product-card:hover {
-  transform: translateY(-5px);
+/* ensure buttons inside card don't trigger card click */
+.card-actions .btn, .card-actions .qty-box { cursor: pointer; }
+
+/* ===== product details & cart area ===== */
+#product-details, #cart-section {
+  display:none;
+  background:#fff;
+  padding:18px;
+  border-radius:12px;
+  box-shadow: 0 8px 20px rgba(15,23,42,0.06);
+  margin-top:18px;
 }
 
-.product-card img {
-  width: 100%;
-  height: 180px;
-  object-fit: cover;
-  border-radius: 10px;
-  margin-bottom: 10px;
-}
-
-button {
-  margin-top: 10px;
-  padding: 10px 15px;
-  border: none;
-  cursor: pointer;
-  border-radius: 5px;
-  background: #222;
-  color: white;
-  transition: all 0.3s;
-}
-
-button:hover {
-  background: #007BFF;
-  color: #fff;
-}
-
-/* PRODUCT DETAILS */
-#product-details {
-  display: none;
-  background: #fff;
-  padding: 20px;
-  border-radius: 15px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  margin-top: 20px;
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-#product-details img {
-  width: 100%;
-  max-width: 300px;
-  border-radius: 10px;
-  display: block;
-  margin-bottom: 20px;
-}
-
-/* CART */
-#cart-section {
-  display: none;
-  background: #fff;
-  padding: 20px;
-  border-radius: 15px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  margin-top: 20px;
-}
+#product-details img { width:100%; max-width:320px; border-radius:10px; display:block; margin-bottom:12px; }
 
 .cart-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 15px;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 10px;
-  transition: background 0.2s;
+  display:flex;
+  gap:12px;
+  align-items:center;
+  justify-content:space-between;
+  padding:10px;
+  border-radius:8px;
+  margin-bottom:10px;
+  border:1px solid #eef2f6;
 }
+.cart-left { display:flex; gap:12px; align-items:center; }
+.cart-left img { width:56px; height:56px; object-fit:cover; border-radius:8px; }
+.cart-name { font-weight:600; }
 
-.cart-row:hover {
-  background: #f0f4f8;
-}
+/* cart qty controls use same box style */
+.cart-controls { display:flex; align-items:center; gap:8px; }
 
-.cart-row img {
-  width: 50px;
-  height: 50px;
-  object-fit: cover;
-  border-radius: 5px;
-  margin-right: 10px;
-}
+/* total */
+.cart-total { text-align:right; font-weight:800; margin-top:14px; font-size:18px; }
 
-.cart-row span {
-  flex: 1;
-  line-height: 1.2;
-}
+/* footer */
+footer { text-align:center; padding:18px; margin-top:26px; color:#fff; background:#111827; }
 
-.cart-row input {
-  width: 50px;
-  margin-right: 5px;
-}
-
-.cart-row button {
-  padding: 5px 10px;
-  background: red;
-  color: white;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-footer {
-  text-align: center;
-  padding: 20px;
-  background: #222;
-  color: white;
-  margin-top: 40px;
+/* small screen adjustments */
+@media (max-width:420px){
+  .logo { height:40px; }
+  #products { gap:12px; }
+  .product-card img { height:150px; }
+  .qty-box button { width:30px; height:30px; }
+  .qty-box .qty-number { min-width:30px; padding:6px; }
 }
 </style>
 </head>
 <body>
 
 <header>
-  <div style="display:flex;align-items:center;">
-    <img src="dummy.jpg" alt="MS Accessories Logo" onclick="enlargeLogo(this)">
-  </div>
+  <div class="header-left">
+    <img class="logo" src="dummy.jpg" alt="MS Accessories Logo" onclick="enlargeLogo(this)">
+    </div>
   <nav>
     <a href="#" onclick="showSection('home')">Home</a>
-    <a href="#" onclick="showSection('cart')">Cart (<span id='cart-count'>0</span>)</a>
+    <a href="#" onclick="showSection('cart')">Cart (<span id="cart-count">0</span>)</a>
   </nav>
 </header>
 
 <main>
+  <!-- search -->
+  <input id="search-bar" placeholder="Search products..." oninput="searchProducts()">
 
-<!-- SEARCH BAR -->
-<input type="text" id="search-bar" placeholder="Search products..." onkeyup="searchProducts()">
-
-<!-- CATEGORY TABS -->
-<div id="category-tabs">
-  <button onclick="filterCategory('All')">All</button>
-  <button onclick="filterCategory('Necklace')">Necklace</button>
-  <button onclick="filterCategory('Earrings')">Earrings</button>
-  <button onclick="filterCategory('Bracelets')">Bracelets</button>
-  <button onclick="filterCategory('Combo Boxes')">Combo Boxes</button>
-</div>
-
-<!-- PRODUCT LIST -->
-<section id="home-section">
-  <h2>Products</h2>
-  <div id="products">
-
-    <div class="product-card" data-name="Gold Necklace" data-category="Necklace" onclick="viewProduct('Gold Necklace',1200,'dummy.jpg')">
-      <img src="dummy.jpg">
-      <h3>Gold Necklace</h3>
-      <p>₹1200</p>
-      <button onclick="event.stopPropagation(); addToCartNow('Gold Necklace',1200,'dummy.jpg')">Add to Cart</button>
-      <button onclick="event.stopPropagation(); buyNow('Gold Necklace',1200,'dummy.jpg')">Buy Now</button>
-    </div>
-
-    <div class="product-card" data-name="Silver Earrings" data-category="Earrings" onclick="viewProduct('Silver Earrings',499,'dummy.jpg')">
-      <img src="dummy.jpg">
-      <h3>Silver Earrings</h3>
-      <p>₹499</p>
-      <button onclick="event.stopPropagation(); addToCartNow('Silver Earrings',499,'dummy.jpg')">Add to Cart</button>
-      <button onclick="event.stopPropagation(); buyNow('Silver Earrings',499,'dummy.jpg')">Buy Now</button>
-    </div>
-
-    <div class="product-card" data-name="Leather Bracelet" data-category="Bracelets" onclick="viewProduct('Leather Bracelet',799,'dummy.jpg')">
-      <img src="dummy.jpg">
-      <h3>Leather Bracelet</h3>
-      <p>₹799</p>
-      <button onclick="event.stopPropagation(); addToCartNow('Leather Bracelet',799,'dummy.jpg')">Add to Cart</button>
-      <button onclick="event.stopPropagation(); buyNow('Leather Bracelet',799,'dummy.jpg')">Buy Now</button>
-    </div>
-
-    <div class="product-card" data-name="Combo Box Special" data-category="Combo Boxes" onclick="viewProduct('Combo Box Special',1999,'dummy.jpg')">
-      <img src="dummy.jpg">
-      <h3>Combo Box Special</h3>
-      <p>₹1999</p>
-      <button onclick="event.stopPropagation(); addToCartNow('Combo Box Special',1999,'dummy.jpg')">Add to Cart</button>
-      <button onclick="event.stopPropagation(); buyNow('Combo Box Special',1999,'dummy.jpg')">Buy Now</button>
-    </div>
-
+  <!-- categories -->
+  <div id="category-tabs">
+    <button onclick="filterCategory('All')">All</button>
+    <button onclick="filterCategory('Necklace')">Necklace</button>
+    <button onclick="filterCategory('Earrings')">Earrings</button>
+    <button onclick="filterCategory('Bracelets')">Bracelets</button>
+    <button onclick="filterCategory('Combo Boxes')">Combo Boxes</button>
   </div>
-</section>
 
-<!-- PRODUCT DETAILS -->
-<section id="product-details">
-  <button onclick="backHome()">← Back</button>
-  <h2 id="detail-name"></h2>
-  <img id="detail-image" src="">
-  <p id="detail-price"></p>
-  <button onclick="addToCart()">Add to Cart</button>
-  <button onclick="buyNow(selectedProduct.name, selectedProduct.price, selectedProduct.image)">Buy Now</button>
-</section>
+  <!-- products -->
+  <section id="home-section">
+    <h2>Products</h2>
+    <div id="products">
+      <!-- product cards: note data-id for unique product ids -->
+      <div class="product-card" data-id="p1" data-name="Gold Necklace" data-category="Necklace" onclick="cardClicked(event,'p1')">
+        <img src="dummy.jpg" alt="Gold Necklace">
+        <h3 onclick="event.stopPropagation(); viewProduct('Gold Necklace',1200,'dummy.jpg')">Gold Necklace</h3>
+        <p class="price">₹1200</p>
 
-<!-- CART -->
-<section id="cart-section">
-  <h2>Your Cart</h2>
-  <div id="cart-items"></div>
-  <h3>Total: ₹<span id="total">0</span></h3>
-</section>
+        <div class="card-actions" id="actions-p1">
+          <button class="btn btn-add" onclick="event.stopPropagation(); addToCartNow('p1')">Add to Cart</button>
+          <button class="btn buy btn-buy" onclick="event.stopPropagation(); buyNow('p1')">Buy Now</button>
+        </div>
+      </div>
 
+      <div class="product-card" data-id="p2" data-name="Silver Earrings" data-category="Earrings" onclick="cardClicked(event,'p2')">
+        <img src="dummy.jpg" alt="Silver Earrings">
+        <h3 onclick="event.stopPropagation(); viewProduct('Silver Earrings',499,'dummy.jpg')">Silver Earrings</h3>
+        <p class="price">₹499</p>
+
+        <div class="card-actions" id="actions-p2">
+          <button class="btn btn-add" onclick="event.stopPropagation(); addToCartNow('p2')">Add to Cart</button>
+          <button class="btn buy btn-buy" onclick="event.stopPropagation(); buyNow('p2')">Buy Now</button>
+        </div>
+      </div>
+
+      <div class="product-card" data-id="p3" data-name="Leather Bracelet" data-category="Bracelets" onclick="cardClicked(event,'p3')">
+        <img src="dummy.jpg" alt="Leather Bracelet">
+        <h3 onclick="event.stopPropagation(); viewProduct('Leather Bracelet',799,'dummy.jpg')">Leather Bracelet</h3>
+        <p class="price">₹799</p>
+
+        <div class="card-actions" id="actions-p3">
+          <button class="btn btn-add" onclick="event.stopPropagation(); addToCartNow('p3')">Add to Cart</button>
+          <button class="btn buy btn-buy" onclick="event.stopPropagation(); buyNow('p3')">Buy Now</button>
+        </div>
+      </div>
+
+      <div class="product-card" data-id="p4" data-name="Combo Box Special" data-category="Combo Boxes" onclick="cardClicked(event,'p4')">
+        <img src="dummy.jpg" alt="Combo Box Special">
+        <h3 onclick="event.stopPropagation(); viewProduct('Combo Box Special',1999,'dummy.jpg')">Combo Box Special</h3>
+        <p class="price">₹1999</p>
+
+        <div class="card-actions" id="actions-p4">
+          <button class="btn btn-add" onclick="event.stopPropagation(); addToCartNow('p4')">Add to Cart</button>
+          <button class="btn buy btn-buy" onclick="event.stopPropagation(); buyNow('p4')">Buy Now</button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- product details -->
+  <section id="product-details">
+    <button onclick="backHome()">← Back</button>
+    <h2 id="detail-name"></h2>
+    <img id="detail-image" src="" alt="">
+    <p id="detail-price"></p>
+    <div style="margin-top:12px;">
+      <button class="btn" onclick="addToCart()">Add to Cart</button>
+      <button class="btn buy" onclick="buyNow(selectedProduct.id)">Buy Now</button>
+    </div>
+  </section>
+
+  <!-- cart -->
+  <section id="cart-section">
+    <h2>Your Cart</h2>
+    <div id="cart-items"></div>
+    <div class="cart-total">Total: ₹<span id="total">0</span></div>
+  </section>
 </main>
 
-<footer>
-  © 2025 MS Accessories
-</footer>
+<footer>© 2025 MS Accessories</footer>
 
 <script>
-// LOGO ENLARGE
-function enlargeLogo(img){
-  img.style.transform = img.style.transform === "scale(2)" ? "scale(1)" : "scale(2)";
+/* ===== Data: product list (id,name,price,image) ===== */
+const PRODUCTS = {
+  p1: { id:'p1', name:'Gold Necklace', price:1200, image:'dummy.jpg', category:'Necklace' },
+  p2: { id:'p2', name:'Silver Earrings', price:499, image:'dummy.jpg', category:'Earrings' },
+  p3: { id:'p3', name:'Leather Bracelet', price:799, image:'dummy.jpg', category:'Bracelets' },
+  p4: { id:'p4', name:'Combo Box Special', price:1999, image:'dummy.jpg', category:'Combo Boxes' }
+};
+
+/* ===== Cart state ===== */
+let cart = []; // {id, name, price, image, quantity}
+let selectedProduct = {}; // for product details view
+
+/* ===== Utility functions ===== */
+function findCartItem(id){ return cart.find(it => it.id === id); }
+function updateCartCount(){
+  const totalQty = cart.reduce((s,it)=> s + it.quantity, 0);
+  document.getElementById('cart-count').textContent = totalQty;
 }
 
-// CART
-let selectedProduct = {};
-let cart = [];
+/* ===== Product card click handler (open details) but avoid when clicking buttons) ===== */
+function cardClicked(event, id){
+  // if click happened on a control inside card, do nothing (controls stopPropagation)
+  // otherwise open the product details
+  viewProduct(PRODUCTS[id].name, PRODUCTS[id].price, PRODUCTS[id].image, id);
+}
 
-// SHOW SECTIONS
-function showSection(section) {
-  const homeSection = document.getElementById("home-section");
-  const productSection = document.getElementById("product-details");
-  const cartSection = document.getElementById("cart-section");
-  const searchBar = document.getElementById("search-bar");
-  const categoryTabs = document.getElementById("category-tabs");
+/* ===== View product details ===== */
+function viewProduct(name, price, image, id){
+  selectedProduct = { id, name, price, image };
+  document.getElementById('detail-name').textContent = name;
+  document.getElementById('detail-image').src = image;
+  document.getElementById('detail-price').textContent = 'Price: ₹' + price;
 
-  homeSection.style.display = section==='home' ? 'block':'none';
-  productSection.style.display = 'none';
-  cartSection.style.display = section==='cart' ? 'block':'none';
+  // hide home, show product details; also hide search/categories
+  document.getElementById('home-section').style.display = 'none';
+  document.getElementById('product-details').style.display = 'block';
+  document.getElementById('cart-section').style.display = 'none';
+  document.getElementById('search-bar').style.display = 'none';
+  document.getElementById('category-tabs').style.display = 'none';
+}
 
-  if(section==='home'){
-    searchBar.style.display='block';
-    categoryTabs.style.display='block';
-  }else{
-    searchBar.style.display='none';
-    categoryTabs.style.display='none';
+/* ===== Back home ===== */
+function backHome(){
+  document.getElementById('product-details').style.display = 'none';
+  document.getElementById('home-section').style.display = 'block';
+  document.getElementById('cart-section').style.display = 'none';
+  document.getElementById('search-bar').style.display = 'block';
+  document.getElementById('category-tabs').style.display = 'flex';
+}
+
+/* ===== Add to cart from card (no alert) ===== */
+function addToCartNow(id){
+  const prod = PRODUCTS[id];
+  const existing = findCartItem(id);
+  if(existing){
+    existing.quantity += 1;
+  } else {
+    cart.push({ id: prod.id, name: prod.name, price: prod.price, image: prod.image, quantity: 1 });
   }
-
-  if(section==='cart') loadCart();
-}
-
-// VIEW PRODUCT
-function viewProduct(name, price, image) {
-  selectedProduct = {name, price, image};
-  document.getElementById("detail-name").textContent = name;
-  document.getElementById("detail-image").src = image;
-  document.getElementById("detail-price").textContent = "Price: ₹"+price;
-  document.getElementById("home-section").style.display='none';
-  document.getElementById("product-details").style.display='block';
-  document.getElementById("search-bar").style.display='none';
-  document.getElementById("category-tabs").style.display='none';
-}
-
-// BACK HOME
-function backHome() {
-  document.getElementById("product-details").style.display='none';
-  document.getElementById("home-section").style.display='block';
-  document.getElementById("search-bar").style.display='block';
-  document.getElementById("category-tabs").style.display='block';
-}
-
-// ADD TO CART
-function addToCart() {
-  cart.push({...selectedProduct, quantity:1});
   updateCartCount();
-  alert("Added to cart!");
-}
-function addToCartNow(name, price, image){
-  cart.push({name, price, image, quantity:1});
-  updateCartCount();
-  alert("Added to cart!");
+  updateProductCardUI(id);
+  renderCart();
 }
 
-// BUY NOW
-function buyNow(name, price, image){
-  cart.push({name, price, image, quantity:1});
-  updateCartCount();
+/* ===== Add to cart from product details view (uses selectedProduct) ===== */
+function addToCart(){
+  if(!selectedProduct.id) return;
+  addToCartNow(selectedProduct.id);
+}
+
+/* ===== Buy Now: add and go to cart view ===== */
+function buyNow(id){
+  addToCartNow(id);
   showSection('cart');
 }
 
-// UPDATE CART COUNT
-function updateCartCount(){
-  document.getElementById("cart-count").textContent = cart.length;
+/* ===== Show section helper (home/cart/product) ===== */
+function showSection(section){
+  document.getElementById('home-section').style.display = section === 'home' ? 'block' : 'none';
+  document.getElementById('product-details').style.display = section === 'product' ? 'block' : 'none';
+  document.getElementById('cart-section').style.display = section === 'cart' ? 'block' : 'none';
+
+  if(section === 'home'){
+    document.getElementById('search-bar').style.display = 'block';
+    document.getElementById('category-tabs').style.display = 'flex';
+  } else {
+    document.getElementById('search-bar').style.display = 'none';
+    document.getElementById('category-tabs').style.display = 'none';
+  }
+
+  if(section === 'cart') renderCart();
 }
 
-// LOAD CART
-function loadCart(){
-  let container = document.getElementById("cart-items");
-  container.innerHTML="";
-  let total=0;
-  cart.forEach((item,index)=>{
-    total += item.price*item.quantity;
-    container.innerHTML+=`
-      <div class="cart-row" onclick="viewProduct('${item.name}',${item.price},'${item.image}')">
-        <img src="${item.image}">
-        <span>${item.name}</span>
-        <input type="number" min="1" value="${item.quantity}" onchange="changeQty(${index},this.value)" onclick="event.stopPropagation()">
-        <button onclick="removeItem(${index}); event.stopPropagation();">X</button>
+/* ===== Update product card UI: show counter if in cart, else show add+buy buttons ===== */
+function updateProductCardUI(id){
+  const actions = document.getElementById('actions-' + id);
+  const existing = findCartItem(id);
+  if(!actions) return;
+
+  if(existing && existing.quantity > 0){
+    // replace actions innerHTML with qty box and hide buy
+    actions.innerHTML = `
+      <div class="qty-box" id="qtybox-${id}" onclick="event.stopPropagation()">
+        <button onclick="decreaseFromCard(event,'${id}')">−</button>
+        <div class="qty-number" id="qtynum-${id}">${existing.quantity}</div>
+        <button onclick="increaseFromCard(event,'${id}')">+</button>
       </div>
     `;
-  });
-  document.getElementById("total").textContent=total;
+  } else {
+    // restore buttons
+    actions.innerHTML = `
+      <button class="btn btn-add" onclick="event.stopPropagation(); addToCartNow('${id}')">Add to Cart</button>
+      <button class="btn buy btn-buy" onclick="event.stopPropagation(); buyNow('${id}')">Buy Now</button>
+    `;
+  }
 }
 
-// EDIT CART
-function changeQty(index,newQty){
-  cart[index].quantity = parseInt(newQty);
-  loadCart();
-}
-function removeItem(index){
-  cart.splice(index,1);
-  updateCartCount();
-  loadCart();
-}
+/* increase/decrease from product card controls */
+function increaseFromCard(e, id){ e.stopPropagation(); changeQtyFromCard(id, 1); }
+function decreaseFromCard(e, id){ e.stopPropagation(); changeQtyFromCard(id, -1); }
 
-// SEARCH
-function searchProducts(){
-  let search = document.getElementById("search-bar").value.toLowerCase();
-  document.querySelectorAll(".product-card").forEach(card=>{
-    let name = card.getAttribute("data-name").toLowerCase();
-    card.style.display = name.includes(search) ? "block":"none";
-  });
-}
-
-// CATEGORY FILTER
-function filterCategory(category){
-  document.querySelectorAll(".product-card").forEach(card=>{
-    if(category==='All'){card.style.display='block';
-    }else{
-      card.style.display = card.getAttribute("data-category")===category ? 'block':'none';
+function changeQtyFromCard(id, delta){
+  const item = findCartItem(id);
+  if(!item && delta>0){
+    cart.push({ id: PRODUCTS[id].id, name: PRODUCTS[id].name, price: PRODUCTS[id].price, image: PRODUCTS[id].image, quantity: 1 });
+  } else if(item){
+    item.quantity += delta;
+    if(item.quantity <= 0){
+      // remove from cart
+      cart = cart.filter(x => x.id !== id);
+      // restore card UI
+      updateProductCardUI(id);
     }
+  }
+  updateCartCount();
+  // If still in cart, update number shown
+  const numEl = document.getElementById('qtynum-' + id);
+  if(numEl){
+    const newItem = findCartItem(id);
+    if(newItem) numEl.textContent = newItem.quantity;
+    else { /* removed */ }
+  } else {
+    // if there wasn't a qty box, create one
+    updateProductCardUI(id);
+  }
+  renderCart();
+}
+
+/* ===== Render cart area with box-style controls ===== */
+function renderCart(){
+  const container = document.getElementById('cart-items');
+  container.innerHTML = '';
+  let total = 0;
+  cart.forEach((it, index) => {
+    total += it.price * it.quantity;
+    const row = document.createElement('div');
+    row.className = 'cart-row';
+    row.innerHTML = `
+      <div class="cart-left">
+        <img src="${it.image}" alt="${it.name}">
+        <div>
+          <div class="cart-name">${it.name}</div>
+          <div style="color:#666; font-size:13px;">₹${it.price} each</div>
+        </div>
+      </div>
+      <div class="cart-controls">
+        <div class="qty-box" onclick="event.stopPropagation()">
+          <button onclick="cartDecrease(event, ${index})">−</button>
+          <div class="qty-number" id="cart-qty-${it.id}">${it.quantity}</div>
+          <button onclick="cartIncrease(event, ${index})">+</button>
+        </div>
+      </div>
+    `;
+    container.appendChild(row);
+  });
+  document.getElementById('total').textContent = total;
+  updateCartCount();
+
+  // Also update product cards to show correct qty boxes
+  Object.keys(PRODUCTS).forEach(pid => updateProductCardUI(pid));
+}
+
+/* cart increase/decrease from cart area */
+function cartIncrease(e, idx){
+  e.stopPropagation();
+  cart[idx].quantity += 1;
+  renderCart();
+}
+function cartDecrease(e, idx){
+  e.stopPropagation();
+  cart[idx].quantity -= 1;
+  if(cart[idx].quantity <= 0){
+    const id = cart[idx].id;
+    cart.splice(idx, 1);
+    // restore product card UI
+    updateProductCardUI(id);
+  }
+  renderCart();
+}
+
+/* ===== helper to change qty directly (used earlier) ===== */
+function changeQty(index,newQty){
+  // not used in this implementation, kept for compatibility
+  if(!cart[index]) return;
+  const q = parseInt(newQty)||1;
+  cart[index].quantity = q;
+  renderCart();
+}
+
+/* ===== search filter & category filter ===== */
+function searchProducts(){
+  const term = document.getElementById('search-bar').value.trim().toLowerCase();
+  document.querySelectorAll('.product-card').forEach(card => {
+    const name = card.getAttribute('data-name').toLowerCase();
+    card.style.display = name.includes(term) ? 'block' : 'none';
   });
 }
-</script>
 
+function filterCategory(cat){
+  document.querySelectorAll('.product-card').forEach(card => {
+    if(cat === 'All') { card.style.display = 'block'; return; }
+    card.style.display = card.getAttribute('data-category') === cat ? 'block' : 'none';
+  });
+}
+
+/* ===== show cart initially empty ===== */
+function showSectionInit(){
+  showSection('home');
+  // ensure product cards reflect empty cart
+  Object.keys(PRODUCTS).forEach(pid => updateProductCardUI(pid));
+  renderCart();
+}
+
+/* ===== logo enlarge simple toggle ===== */
+function enlargeLogo(img){
+  img.style.transform = img.style.transform === 'scale(1.6)' ? 'scale(1)' : 'scale(1.6)';
+}
+
+/* ===== Initialize ===== */
+document.addEventListener('DOMContentLoaded', showSectionInit);
+</script>
 </body>
 </html>
