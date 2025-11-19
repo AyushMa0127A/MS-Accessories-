@@ -1,81 +1,753 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MS Accessories – Home</title>
-<link rel="stylesheet" href="style.css">
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>MS Accessories — Shop (Firebase Integrated)</title>
+
+<style>
+:root{--primary:#007BFF;--muted:#f3f6fb;--card:#fff;--accent:#6b46c1;--success:#16a34a}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;background:var(--muted);color:#222}
+
+/* Header */
+header{position:sticky;top:0;z-index:120;display:flex;align-items:center;justify-content:space-between;background:var(--card);padding:12px 18px;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+.header-left{display:flex;align-items:center;gap:12px}
+.logo{height:42px;cursor:pointer;border-radius:6px}
+.site-title{margin:0;color:var(--primary);font-weight:700;font-size:18px}
+.header-right{display:flex;align-items:center;gap:12px}
+.icon-btn{background:transparent;border:none;cursor:pointer;padding:6px;border-radius:8px}
+.account-bubble{width:36px;height:36px;border-radius:50%;background:#eee;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#444}
+
+/* Main */
+main{max-width:1200px;margin:18px auto;padding:0 18px}
+
+/* Search & categories */
+#search-bar{width:100%;padding:12px;border-radius:10px;border:1px solid #d7e0ea;margin-bottom:14px}
+#category-tabs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+#category-tabs button{background:var(--primary);color:#fff;border:0;padding:8px 14px;border-radius:20px;cursor:pointer;font-weight:600}
+#category-tabs button:hover{background:#005bb5}
+
+/* Grid */
+#products{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+@media(min-width:768px){#products{grid-template-columns:repeat(4,1fr)}}
+
+/* Cards */
+.product-card{background:var(--card);padding:12px;border-radius:12px;box-shadow:0 6px 18px rgba(15,23,42,0.06);transition:transform .12s,box-shadow .12s;position:relative}
+.product-card:hover{transform:translateY(-6px);box-shadow:0 10px 28px rgba(15,23,42,0.08)}
+.product-card img{width:100%;height:170px;object-fit:cover;border-radius:8px;display:block}
+.product-card h3{margin:10px 0 6px;font-size:16px;cursor:pointer}
+.product-card p.price{color:var(--primary);font-weight:700;margin:0 0 10px}
+
+/* Buttons & qty box */
+.card-actions{display:flex;gap:8px;justify-content:center;align-items:center;margin-top:8px}
+.btn{padding:8px 12px;border-radius:8px;border:0;cursor:pointer;font-weight:700;background:#222;color:#fff}
+.btn.buy{background:var(--primary)}
+.qty-box{display:inline-flex;align-items:center;border:1px solid #d7dde6;border-radius:8px;overflow:hidden;background:#fff;font-weight:700}
+.qty-box button{width:36px;height:36px;border:0;background:#f3f4f6;cursor:pointer;font-size:18px}
+.qty-box .qty-number{min-width:38px;text-align:center;padding:6px 8px}
+
+/* Sections */
+.section-card{display:none;background:var(--card);padding:16px;border-radius:12px;box-shadow:0 8px 20px rgba(15,23,42,0.06);margin-top:18px}
+.section-card.show{display:block}
+#product-details img{width:100%;max-width:320px;border-radius:10px;display:block;margin-bottom:12px}
+
+/* Cart */
+.cart-row{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px;border-radius:8px;margin-bottom:10px;border:1px solid #eef2f6}
+.cart-left{display:flex;gap:12px;align-items:center}
+.cart-left img{width:56px;height:56px;object-fit:cover;border-radius:8px}
+.cart-name{font-weight:700}
+.cart-total{text-align:right;font-weight:800;margin-top:14px;font-size:18px}
+
+/* Payment UI */
+.payment-card{display:flex;gap:12px;align-items:center;padding:12px;background:#fff;border-radius:10px;border:1px solid #eceffb;cursor:pointer}
+.payment-details{display:none;margin-top:10px;padding:12px;border-radius:8px;background:#fbfbff;border:1px solid #eef0ff}
+.form-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.form-row input,.form-row select{padding:10px;border-radius:8px;border:1px solid #ddd;min-width:0;flex:1}
+.confirm-banner{margin-top:14px;padding:12px;background:#e6ffed;border:1px solid #b7f5c7;color:#056a2f;border-radius:8px;display:none}
+
+/* Account drawer (D2) */
+#account-drawer{position:fixed;right:-420px;top:0;height:100vh;width:360px;background:var(--card);box-shadow:-12px 0 30px rgba(0,0,0,0.12);transition:right .25s ease;z-index:240;padding:18px;overflow:auto}
+#account-drawer.open{right:0}
+.drawer-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.drawer-title{font-weight:800;color:var(--accent)}
+.close-drawer{background:transparent;border:0;font-size:20px;cursor:pointer}
+.profile-pic{width:84px;height:84px;border-radius:12px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.profile-pic img{width:100%;height:100%;object-fit:cover}
+.input-row{margin:8px 0}
+.input-row label{display:block;font-size:13px;margin-bottom:6px}
+.input-row input,.input-row textarea{width:100%;padding:10px;border-radius:8px;border:1px solid #ddd}
+.input-row input[disabled]{background:#f5f7fb}
+.drawer-actions{display:flex;gap:10px;margin-top:12px}
+.small-muted{font-size:13px;color:#666;margin-top:6px}
+.login-block{margin-top:8px}
+.footer{margin-top:24px;padding:14px;text-align:center;background:#111827;color:#fff;border-radius:6px}
+
+/* Small screens */
+@media(max-width:420px){#account-drawer{width:100%;right:-100%} .product-card img{height:150px} .qty-box button{width:30px;height:30px} .qty-box .qty-number{min-width:30px;padding:6px}}
+</style>
 </head>
 <body>
 
 <header>
-  <div style="display:flex;align-items:center;">
-    <img src="dummy.jpg" alt="MS Accessories Logo" onclick="enlargeLogo(this)">
+  <div class="header-left">
+    <img class="logo" src="dummy.jpg" alt="MS Accessories" onclick="enlargeLogo(this)">
+    <div>
+      <div class="site-title">MS Accessories</div>
+      <div style="font-size:12px;color:#666">Everyday style</div>
+    </div>
   </div>
-  <nav>
-    <a href="index.html">Home</a>
-    <a href="cart.html">Cart (<span id="cart-count">0</span>)</a>
-    <a href="profile.html">Profile</a>
-  </nav>
+
+  <div class="header-right">
+    <button class="icon-btn" onclick="showSection('home')" title="Home">Home</button>
+    <button class="icon-btn" onclick="showSection('cart')" title="Cart">Cart (<span id="cart-count">0</span>)</button>
+
+    <!-- Account icon -->
+    <button class="icon-btn" id="account-open-btn" title="Account" onclick="toggleAccountDrawer()">
+      <div id="account-bubble" class="account-bubble">A</div>
+    </button>
+  </div>
 </header>
 
 <main>
-  <!-- Search bar -->
-  <input type="text" id="search-bar" placeholder="Search products..." onkeyup="searchProducts()">
+  <input id="search-bar" placeholder="Search products..." oninput="searchProducts()">
 
-  <!-- Category tabs -->
   <div id="category-tabs">
-    <button onclick="loadProducts('All')">All</button>
-    <button onclick="loadProducts('Necklace')">Necklace</button>
-    <button onclick="loadProducts('Earrings')">Earrings</button>
-    <button onclick="loadProducts('Bracelets')">Bracelets</button>
-    <button onclick="loadProducts('Combo Boxes')">Combo Boxes</button>
+    <button onclick="filterCategory('All')">All</button>
+    <button onclick="filterCategory('Necklace')">Necklace</button>
+    <button onclick="filterCategory('Earrings')">Earrings</button>
+    <button onclick="filterCategory('Bracelets')">Bracelets</button>
+    <button onclick="filterCategory('Combo Boxes')">Combo Boxes</button>
   </div>
 
-  <!-- Product container -->
-  <div id="product-container">
-    <!-- Products will be loaded from products.html via JS -->
-  </div>
+  <!-- HOME -->
+  <section id="home-section" class="section-card show">
+    <h2>Products</h2>
+    <div id="products">
+      <div class="product-card" data-id="p1" data-name="Gold Necklace" data-category="Necklace" onclick="cardClicked(event,'p1')">
+        <img src="dummy.jpg" alt="Gold Necklace">
+        <h3 onclick="event.stopPropagation(); viewProduct('Gold Necklace',1200,'dummy.jpg','p1')">Gold Necklace</h3>
+        <p class="price">₹1200</p>
+        <div class="card-actions" id="actions-p1">
+          <button class="btn btn-add" onclick="event.stopPropagation(); addToCartNow('p1')">Add to Cart</button>
+          <button class="btn buy btn-buy" onclick="event.stopPropagation(); buyNow('p1')">Buy Now</button>
+        </div>
+      </div>
+
+      <div class="product-card" data-id="p2" data-name="Silver Earrings" data-category="Earrings" onclick="cardClicked(event,'p2')">
+        <img src="dummy.jpg" alt="Silver Earrings">
+        <h3 onclick="event.stopPropagation(); viewProduct('Silver Earrings',499,'dummy.jpg','p2')">Silver Earrings</h3>
+        <p class="price">₹499</p>
+        <div class="card-actions" id="actions-p2">
+          <button class="btn btn-add" onclick="event.stopPropagation(); addToCartNow('p2')">Add to Cart</button>
+          <button class="btn buy btn-buy" onclick="event.stopPropagation(); buyNow('p2')">Buy Now</button>
+        </div>
+      </div>
+
+      <div class="product-card" data-id="p3" data-name="Leather Bracelet" data-category="Bracelets" onclick="cardClicked(event,'p3')">
+        <img src="dummy.jpg" alt="Leather Bracelet">
+        <h3 onclick="event.stopPropagation(); viewProduct('Leather Bracelet',799,'dummy.jpg','p3')">Leather Bracelet</h3>
+        <p class="price">₹799</p>
+        <div class="card-actions" id="actions-p3">
+          <button class="btn btn-add" onclick="event.stopPropagation(); addToCartNow('p3')">Add to Cart</button>
+          <button class="btn buy btn-buy" onclick="event.stopPropagation(); buyNow('p3')">Buy Now</button>
+        </div>
+      </div>
+
+      <div class="product-card" data-id="p4" data-name="Combo Box Special" data-category="Combo Boxes" onclick="cardClicked(event,'p4')">
+        <img src="dummy.jpg" alt="Combo Box Special">
+        <h3 onclick="event.stopPropagation(); viewProduct('Combo Box Special',1999,'dummy.jpg','p4')">Combo Box Special</h3>
+        <p class="price">₹1999</p>
+        <div class="card-actions" id="actions-p4">
+          <button class="btn btn-add" onclick="event.stopPropagation(); addToCartNow('p4')">Add to Cart</button>
+          <button class="btn buy btn-buy" onclick="event.stopPropagation(); buyNow('p4')">Buy Now</button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- PRODUCT DETAILS -->
+  <section id="product-details" class="section-card">
+    <button onclick="backHome()">← Back</button>
+    <h2 id="detail-name"></h2>
+    <img id="detail-image" src="" alt="">
+    <p id="detail-price"></p>
+    <div style="margin-top:12px;">
+      <button class="btn" onclick="addToCart()">Add to Cart</button>
+      <button class="btn buy" onclick="buyNow(selectedProduct.id)">Buy Now</button>
+    </div>
+  </section>
+
+  <!-- CART -->
+  <section id="cart-section" class="section-card">
+    <h2>Your Cart</h2>
+    <div id="cart-items"></div>
+    <div class="cart-total">Total: ₹<span id="total">0</span></div>
+    <div style="margin-top:12px;">
+      <button class="btn buy" onclick="proceedToPayment()">Proceed to Payment (Buy Now)</button>
+    </div>
+  </section>
+
+  <!-- PAYMENT -->
+  <section id="payment-section" class="section-card">
+    <h2>Checkout — Payment Options</h2>
+
+    <div style="margin:10px 0 14px;padding:12px;border-radius:8px;background:#fbfbff;border:1px solid #eef0ff;">
+      <strong>Order summary</strong>
+      <div id="checkout-items" style="margin-top:8px;"></div>
+      <div style="text-align:right;margin-top:10px;font-weight:800;">Total: ₹<span id="checkout-total">0</span></div>
+    </div>
+
+    <div class="pay-grid">
+      <label class="payment-card" onclick="selectPayment('cod')">
+        <input type="radio" name="payment" value="cod" onclick="selectPayment('cod')">
+        <div>
+          <strong>Cash on Delivery</strong>
+          <div style="font-size:13px;color:#555">Pay with cash when your order arrives</div>
+        </div>
+      </label>
+
+      <label class="payment-card" onclick="selectPayment('upi')">
+        <input type="radio" name="payment" value="upi" onclick="selectPayment('upi')">
+        <div>
+          <strong>UPI (GPay / PhonePe / Paytm)</strong>
+          <div style="font-size:13px;color:#555">Enter UPI ID or scan QR</div>
+        </div>
+      </label>
+
+      <div id="upi-details" class="payment-details">
+        <div style="margin-bottom:8px;"><strong>UPI ID</strong></div>
+        <input id="upi-id" placeholder="example@okaxis" style="padding:10px;border-radius:8px;border:1px solid #ddd;width:100%">
+        <div style="margin-top:8px;font-size:13px;color:#666">Or scan the QR code with your UPI app:</div>
+        <div style="margin-top:8px;display:flex;gap:12px;align-items:center;">
+          <div style="width:120px;height:120px;background:#fff;border:1px dashed #dedede;display:flex;align-items:center;justify-content:center;">QR</div>
+          <div style="font-size:13px;color:#555">Open your UPI app and scan this QR to pay.</div>
+        </div>
+      </div>
+
+      <label class="payment-card" onclick="selectPayment('scan')">
+        <input type="radio" name="payment" value="scan" onclick="selectPayment('scan')">
+        <div>
+          <strong>Scan & Pay (QR)</strong>
+          <div style="font-size:13px;color:#555">Scan QR using any UPI app</div>
+        </div>
+      </label>
+
+      <label class="payment-card" onclick="selectPayment('card')">
+        <input type="radio" name="payment" value="card" onclick="selectPayment('card')">
+        <div>
+          <strong>Credit / Debit Card</strong>
+          <div style="font-size:13px;color:#555">Pay securely using your card</div>
+        </div>
+      </label>
+
+      <div id="card-details" class="payment-details">
+        <div class="form-row">
+          <input id="card-number" placeholder="Card number (1111 2222 3333 4444)">
+        </div>
+        <div class="form-row">
+          <input id="card-name" placeholder="Name on card">
+        </div>
+        <div class="form-row">
+          <input id="card-exp" placeholder="MM/YY">
+          <input id="card-cvv" placeholder="CVV">
+        </div>
+      </div>
+
+      <label class="payment-card" onclick="selectPayment('netbank')">
+        <input type="radio" name="payment" value="netbank" onclick="selectPayment('netbank')">
+        <div>
+          <strong>Net Banking</strong>
+          <div style="font-size:13px;color:#555">Choose your bank</div>
+        </div>
+      </label>
+
+      <div id="netbank-details" class="payment-details">
+        <div style="margin-bottom:8px;">Select bank</div>
+        <select id="bank-select" style="padding:10px;border-radius:8px;border:1px solid #ddd;">
+          <option value="">-- Select Bank --</option>
+          <option>HDFC Bank</option>
+          <option>ICICI Bank</option>
+          <option>State Bank of India</option>
+          <option>Axis Bank</option>
+          <option>Kotak Mahindra Bank</option>
+        </select>
+      </div>
+
+    </div>
+
+    <div style="margin-top:14px;display:flex;gap:10px;align-items:center;">
+      <button class="btn buy" onclick="processPayment()">Proceed to Pay</button>
+      <button class="btn" onclick="showSection('cart')">Back to Cart</button>
+    </div>
+
+    <div id="payment-confirm" class="confirm-banner">Payment processed (mock). Order placed — thank you!</div>
+  </section>
+
 </main>
 
-<footer>
-  © 2025 MS Accessories
-</footer>
+<!-- Account Drawer -->
+<div id="account-drawer" aria-hidden="true">
+  <div class="drawer-header">
+    <div class="drawer-title">Account</div>
+    <button class="close-drawer" onclick="toggleAccountDrawer()">✕</button>
+  </div>
 
-<script>
-// Logo enlarge
-function enlargeLogo(img){
-  img.style.transform = img.style.transform === "scale(2)" ? "scale(1)" : "scale(2)";
-}
+  <div style="display:flex;gap:12px;align-items:center;margin-bottom:10px">
+    <div class="profile-pic" id="profile-pic-box"><span id="profile-initials" style="font-weight:800;color:#666">A</span></div>
+    <div style="flex:1">
+      <div id="account-name-display" style="font-weight:800">Guest</div>
+      <div id="account-email-display" style="font-size:13px;color:#666">Not signed in</div>
+    </div>
+  </div>
 
-// Load products from products.html
-async function loadProducts(category = 'All') {
-  const container = document.getElementById('product-container');
-  const response = await fetch('products.html');
-  let html = await response.text();
+  <!-- Logged out block (Local login & Google sign-in) -->
+  <div id="account-logged-out">
+    <div style="margin-bottom:8px;font-weight:700">Welcome</div>
 
-  container.innerHTML = html;
+    <!-- Google Sign-In Button -->
+    <div style="margin-bottom:10px">
+      <button class="btn buy" onclick="googleSignIn()">Sign in with Google</button>
+      <div class="small-muted" style="margin-top:6px">Sign in with Google to keep your account across devices.</div>
+    </div>
 
-  // Hide products that don't match the category
-  if(category !== 'All'){
-    document.querySelectorAll('.product-card').forEach(card=>{
-      if(card.dataset.category !== category) card.style.display = 'none';
-    });
-  }
-}
+    <div style="height:1px;background:#eee;margin:12px 0"></div>
 
-// Dummy search function (can filter product names)
-function searchProducts(){
-  let search = document.getElementById("search-bar").value.toLowerCase();
-  document.querySelectorAll(".product-card").forEach(card=>{
-    let name = card.getAttribute("data-name").toLowerCase();
-    card.style.display = name.includes(search) ? "block":"none";
+    <!-- Local Login (email-only) -->
+    <div class="login-block" id="login-block">
+      <div style="font-weight:700;margin-bottom:6px">Log in (Email only)</div>
+      <div class="input-row"><label>Email</label><input id="login-email" placeholder="your@email.com"></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn" onclick="doLogin()">Log in</button>
+        <button class="btn" onclick="showSignup()">Create account</button>
+      </div>
+      <div class="small-muted">Local login stores data on this browser only.</div>
+    </div>
+
+    <!-- Signup form -->
+    <div id="signup-block" style="display:none;margin-top:12px">
+      <div style="font-weight:700;margin-bottom:6px">Create account (Local)</div>
+      <div class="input-row"><label>Name *</label><input id="su-name" placeholder="Full name"></div>
+      <div class="input-row"><label>Email * (used to login)</label><input id="su-email" placeholder="you@email.com"></div>
+      <div class="input-row"><label>Phone *</label><input id="su-phone" placeholder="10-digit phone"></div>
+      <div class="input-row"><label>Address *</label><textarea id="su-address" rows="3" placeholder="House, street, city, pincode"></textarea></div>
+      <div class="input-row"><label>Profile picture (optional)</label><input id="su-pic" type="file" accept="image/*"></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn" onclick="createAccount()">Save account</button>
+        <button class="btn" onclick="hideSignup()">Cancel</button>
+      </div>
+      <div class="small-muted">Fields marked * are required.</div>
+    </div>
+  </div>
+
+  <!-- Logged in block (Firestore user or local user) -->
+  <div id="account-logged-in" style="display:none">
+    <div style="font-weight:700;margin-bottom:8px">Your profile</div>
+
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+      <div class="profile-pic" id="profile-pic-edit"></div>
+      <div style="flex:1">
+        <div style="font-weight:800" id="profile-name-edit">User</div>
+        <div style="font-size:13px;color:#666" id="profile-email-edit">email</div>
+      </div>
+    </div>
+
+    <div class="input-row"><label>Name *</label><input id="pf-name"></div>
+    <div class="input-row"><label>Email (not editable for cloud users)</label><input id="pf-email" disabled></div>
+    <div class="input-row"><label>Phone *</label><input id="pf-phone"></div>
+    <div class="input-row"><label>Address *</label><textarea id="pf-address" rows="3"></textarea></div>
+    <div class="input-row"><label>Change profile picture</label><input id="pf-pic" type="file" accept="image/*"></div>
+
+    <div class="drawer-actions">
+      <button class="btn" onclick="saveProfile()">Save changes</button>
+      <button class="btn" onclick="logout()">Log out</button>
+    </div>
+    <div class="small-muted">Name, Email, Phone, Address are required.</div>
+  </div>
+</div>
+
+<footer class="footer">© 2025 MS Accessories</footer>
+
+<!-- Firebase + App Script -->
+<script type="module">
+  // ---------- Firebase imports ----------
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+  import { getFirestore, doc, setDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+
+  // ---------- Your Firebase Config (from you) ----------
+  const firebaseConfig = {
+    apiKey: "AIzaSyCQnhnsbgajGxCv6JqqTKRntfM_ANChCys",
+    authDomain: "ms-accessories.firebaseapp.com",
+    projectId: "ms-accessories",
+    storageBucket: "ms-accessories.firebasestorage.app",
+    messagingSenderId: "443081327954",
+    appId: "1:443081327954:web:bfb0924f4632d7ee9de68b",
+    measurementId: "G-54NJNW0FLR"
+  };
+
+  // ---------- Init Firebase ----------
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const provider = new GoogleAuthProvider();
+
+  // ---------- App state ----------
+  let firebaseUser = null; // if signed in with Google, this holds auth user object
+
+  // ---------- Utilities used by app (cart, products) ----------
+  function saveCartToLocal(cart){ localStorage.setItem('msacc_cart_v1', JSON.stringify(cart)); }
+  function loadCartFromLocal(){ try{ return JSON.parse(localStorage.getItem('msacc_cart_v1')) || []; }catch(e){return []}}
+
+  // ---------- Hook Firebase auth changes ----------
+  onAuthStateChanged(auth, async (user) => {
+    firebaseUser = user || null;
+    if(user){
+      // load Firestore user doc and update UI
+      const udoc = await getDoc(doc(db, 'users', user.uid));
+      const data = udoc.exists() ? udoc.data() : null;
+      // show logged-in UI
+      document.getElementById('account-logged-out').style.display='none';
+      document.getElementById('account-logged-in').style.display='block';
+      document.getElementById('account-name-display').textContent = (data && data.name) ? data.name : user.displayName || 'User';
+      document.getElementById('account-email-display').textContent = user.email;
+      document.getElementById('profile-name-edit').textContent = (data && data.name) ? data.name : user.displayName || '';
+      document.getElementById('profile-email-edit').textContent = user.email;
+      document.getElementById('pf-name').value = (data && data.name) ? data.name : (user.displayName || '');
+      document.getElementById('pf-email').value = user.email;
+      document.getElementById('pf-phone').value = (data && data.phone) ? data.phone : '';
+      document.getElementById('pf-address').value = (data && data.address) ? data.address : '';
+      // profile pic
+      const picBox = document.getElementById('profile-pic-edit'); picBox.innerHTML='';
+      if(data && data.photo) {
+        const img = document.createElement('img'); img.src = data.photo; picBox.appendChild(img);
+      } else if(user.photoURL){
+        const img = document.createElement('img'); img.src = user.photoURL; picBox.appendChild(img);
+      } else { picBox.innerHTML = '<span style="font-weight:800;color:#666">A</span>'; }
+      // account bubble
+      updateAccountBubble({ name: document.getElementById('pf-name').value });
+    } else {
+      // not signed in with Firebase — show logged-out view but do not delete local accounts
+      document.getElementById('account-logged-out').style.display='block';
+      document.getElementById('account-logged-in').style.display='none';
+      document.getElementById('account-name-display').textContent = 'Guest';
+      document.getElementById('account-email-display').textContent = 'Not signed in';
+      document.getElementById('profile-pic-box').innerHTML = '<span id="profile-initials" style="font-weight:800;color:#666">A</span>';
+      updateAccountBubble(null);
+    }
   });
-}
 
-// Initial load
-loadProducts('All');
+  // ---------- Google sign-in ----------
+  window.googleSignIn = async function(){
+    try{
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      // on first sign-in, create or merge Firestore doc
+      await setDoc(doc(db,'users',user.uid), {
+        name: user.displayName || '',
+        email: user.email || '',
+        photo: user.photoURL || '',
+        phone: '',
+        address: '',
+        updatedAt: new Date()
+      }, { merge: true });
+      // UI will update via onAuthStateChanged
+    }catch(err){
+      console.error('Google sign-in error', err);
+      alert('Google sign-in failed: ' + (err.message || err));
+    }
+  };
+
+  // ---------- Logout from Firebase ----------
+  window.logout = async function(){
+    try{
+      if(firebaseUser){ await signOut(auth); firebaseUser = null; }
+      // also show local logged-out UI
+      document.getElementById('account-logged-out').style.display='block';
+      document.getElementById('account-logged-in').style.display='none';
+      updateAccountBubble(null);
+      toggleAccountDrawer(); // close drawer
+    }catch(e){ console.error(e); }
+  };
+
+  // ---------- Save profile (if firebase user signed in -> update Firestore; else update localStorage account) ----------
+  window.saveProfile = async function(){
+    // required fields check
+    const name = document.getElementById('pf-name').value.trim();
+    const phone = document.getElementById('pf-phone').value.trim();
+    const address = document.getElementById('pf-address').value.trim();
+    if(!name || !phone || !address){ alert('Name, phone and address required.'); return; }
+    if(firebaseUser){
+      // update Firestore
+      const uid = firebaseUser.uid;
+      // handle pic
+      const picInput = document.getElementById('pf-pic');
+      if(picInput && picInput.files && picInput.files[0]){
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+          await updateDoc(doc(db,'users',uid), { name, phone, address, photo: ev.target.result, updatedAt: new Date() });
+          alert('Profile updated (cloud).');
+        };
+        reader.readAsDataURL(picInput.files[0]);
+      } else {
+        await updateDoc(doc(db,'users',uid), { name, phone, address, updatedAt: new Date() });
+        alert('Profile updated (cloud).');
+      }
+    } else {
+      // local account flow (unchanged) - save to localStorage under key msacc_local_user
+      const local = { name, email: document.getElementById('pf-email').value || '', phone, address, pic: null };
+      localStorage.setItem('msacc_local_user', JSON.stringify(local));
+      alert('Profile updated locally.');
+    }
+    refreshAccountUI();
+  };
+
+  // ---------- Helper to update account bubble initials ----------
+  function updateAccountBubble(acc){
+    const bubble = document.getElementById('account-bubble');
+    if(!acc || !acc.name){ bubble.textContent = 'A'; return; }
+    const parts = acc.name.trim().split(' ');
+    let initials = parts[0].charAt(0).toUpperCase();
+    if(parts.length>1) initials += parts[1].charAt(0).toUpperCase();
+    bubble.textContent = initials;
+  }
+
+  // ---------- Reuse/refactor of the previous local account behavior (keeps your local signup/login intact) ----------
+  // Local account keys
+  const LOCAL_ACCOUNT_KEY = 'msacc_local_user_v1';
+  function loadLocalAccount(){ try{ return JSON.parse(localStorage.getItem(LOCAL_ACCOUNT_KEY)) || null }catch(e){ return null } }
+  function saveLocalAccount(obj){ localStorage.setItem(LOCAL_ACCOUNT_KEY, JSON.stringify(obj)); }
+
+  // Local signup (keeps working as before)
+  window.showSignup = function(){ document.getElementById('signup-block').style.display='block'; document.getElementById('login-block').style.display='none'; }
+  window.hideSignup = function(){ document.getElementById('signup-block').style.display='none'; document.getElementById('login-block').style.display='block'; }
+
+  window.createAccount = function(){
+    const name = document.getElementById('su-name').value.trim();
+    const email = document.getElementById('su-email').value.trim().toLowerCase();
+    const phone = document.getElementById('su-phone').value.trim();
+    const address = document.getElementById('su-address').value.trim();
+    const picInput = document.getElementById('su-pic');
+
+    if(!name || !email || !phone || !address){ alert('Please fill all required fields: Name, Email, Phone, Address.'); return; }
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ alert('Please enter a valid email.'); return; }
+    if(!/^\d{10,15}$/.test(phone)){ alert('Please enter a valid phone number.'); return; }
+
+    if(picInput && picInput.files && picInput.files[0]){
+      const file = picInput.files[0];
+      const reader = new FileReader();
+      reader.onload = function(ev){
+        const accountObj = { name, email, phone, address, pic: ev.target.result };
+        saveLocalAccount(accountObj);
+        alert('Local account created and saved in this browser.');
+        hideSignup(); toggleAccountDrawer(); refreshAccountUI();
+      };
+      reader.readAsDataURL(file);
+    } else {
+      const accountObj = { name, email, phone, address, pic: null };
+      saveLocalAccount(accountObj);
+      alert('Local account created and saved in this browser.');
+      hideSignup(); toggleAccountDrawer(); refreshAccountUI();
+    }
+  };
+
+  window.doLogin = function(){
+    const email = (document.getElementById('login-email').value || '').trim().toLowerCase();
+    if(!email){ alert('Enter your email to login.'); return; }
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ alert('Enter a valid email.'); return; }
+    const local = loadLocalAccount();
+    if(!local || local.email !== email){ alert('Local account not found for this email. Please create account or use Google sign-in.'); return; }
+    alert('Local login successful.');
+    // populate logged-in UI from local account (non-cloud)
+    toggleAccountDrawer();
+    refreshAccountUI();
+  };
+
+  // ---------- Refresh Account UI (decides whether cloud or local) ----------
+  function refreshAccountUI(){
+    // If firebaseUser present, onAuthStateChanged already set the UI. If not, check local account:
+    if(firebaseUser) return; // firebase onAuthStateChanged handles UI
+    const local = loadLocalAccount();
+    if(local){
+      document.getElementById('account-logged-out').style.display='none';
+      document.getElementById('account-logged-in').style.display='block';
+      document.getElementById('account-name-display').textContent = local.name;
+      document.getElementById('account-email-display').textContent = local.email;
+      document.getElementById('profile-name-edit').textContent = local.name;
+      document.getElementById('profile-email-edit').textContent = local.email;
+      document.getElementById('pf-name').value = local.name;
+      document.getElementById('pf-email').value = local.email;
+      document.getElementById('pf-phone').value = local.phone;
+      document.getElementById('pf-address').value = local.address;
+      document.getElementById('profile-pic-edit').innerHTML = local.pic ? '<img src="'+local.pic+'">' : '<span style="font-weight:800;color:#666">A</span>';
+      document.getElementById('profile-pic-box').innerHTML = local.pic ? '<img src="'+local.pic+'">' : '<span id="profile-initials" style="font-weight:800;color:#666">A</span>';
+      updateAccountBubble(local);
+    } else {
+      // show logged out
+      document.getElementById('account-logged-out').style.display='block';
+      document.getElementById('account-logged-in').style.display='none';
+      document.getElementById('account-name-display').textContent = 'Guest';
+      document.getElementById('account-email-display').textContent = 'Not signed in';
+      document.getElementById('profile-pic-box').innerHTML = '<span id="profile-initials" style="font-weight:800;color:#666">A</span>';
+      updateAccountBubble(null);
+    }
+  }
+
+  // ---------- Account drawer toggle ----------
+  const drawer = document.getElementById('account-drawer'); let accountOpen=false;
+  window.toggleAccountDrawer = function(){
+    accountOpen = !accountOpen;
+    drawer.classList.toggle('open', accountOpen);
+    drawer.setAttribute('aria-hidden', String(!accountOpen));
+    if(accountOpen) refreshAccountUI();
+  };
+
+  // ---------- CART & SHOP logic (same as before, with local cart persistence) ----------
+  const PRODUCTS = {
+    p1:{id:'p1',name:'Gold Necklace',price:1200,image:'dummy.jpg',category:'Necklace'},
+    p2:{id:'p2',name:'Silver Earrings',price:499,image:'dummy.jpg',category:'Earrings'},
+    p3:{id:'p3',name:'Leather Bracelet',price:799,image:'dummy.jpg',category:'Bracelets'},
+    p4:{id:'p4',name:'Combo Box Special',price:1999,image:'dummy.jpg',category:'Combo Boxes'}
+  };
+
+  let cart = loadCartFromLocal(); // persisted in localStorage
+  function saveCart(){ saveCartToLocal(cart); }
+  function findCartItem(id){ return cart.find(it=>it.id===id); }
+  function updateCartCount(){ const totalQty = cart.reduce((s,it)=>s+it.quantity,0); document.getElementById('cart-count').textContent = totalQty; saveCart(); }
+
+  // product card click
+  window.cardClicked = function(event,id){ viewProduct(PRODUCTS[id].name, PRODUCTS[id].price, PRODUCTS[id].image, id); }
+
+  // view product
+  window.viewProduct = function(name, price, image, id){
+    window.selectedProduct = { id, name, price, image };
+    document.getElementById('detail-name').textContent = name;
+    document.getElementById('detail-image').src = image;
+    document.getElementById('detail-price').textContent = 'Price: ₹' + price;
+    document.getElementById('home-section').classList.remove('show');
+    document.getElementById('product-details').classList.add('show');
+    document.getElementById('cart-section').classList.remove('show');
+    document.getElementById('payment-section').classList.remove('show');
+    document.getElementById('search-bar').style.display='none';
+    document.getElementById('category-tabs').style.display='none';
+    updateProductCardUI(id);
+  };
+
+  window.backHome = function(){
+    document.getElementById('product-details').classList.remove('show');
+    document.getElementById('home-section').classList.add('show');
+    document.getElementById('cart-section').classList.remove('show');
+    document.getElementById('payment-section').classList.remove('show');
+    document.getElementById('search-bar').style.display='block';
+    document.getElementById('category-tabs').style.display='flex';
+  };
+
+  // add to cart
+  window.addToCartNow = function(id){
+    const prod = PRODUCTS[id];
+    const existing = findCartItem(id);
+    if(existing) existing.quantity += 1;
+    else cart.push({ id: prod.id, name: prod.name, price: prod.price, image: prod.image, quantity: 1 });
+    updateCartCount(); updateProductCardUI(id); renderCart(); saveCart();
+  };
+  window.addToCart = function(){ if(!window.selectedProduct || !window.selectedProduct.id) return; addToCartNow(window.selectedProduct.id); };
+
+  // buy now
+  window.buyNow = function(id){ addToCartNow(id); proceedToPayment(); };
+
+  // proceed to payment
+  window.proceedToPayment = function(){
+    document.getElementById('home-section').classList.remove('show');
+    document.getElementById('product-details').classList.remove('show');
+    document.getElementById('cart-section').classList.remove('show');
+    document.getElementById('payment-section').classList.add('show');
+    document.getElementById('search-bar').style.display='none';
+    document.getElementById('category-tabs').style.display='none';
+
+    const checkoutItems = document.getElementById('checkout-items'); checkoutItems.innerHTML=''; let total=0;
+    cart.forEach(it=>{ total += it.price * it.quantity; const div = document.createElement('div'); div.style.display='flex'; div.style.justifyContent='space-between'; div.style.marginBottom='6px'; div.innerHTML = `<div style="font-weight:600">${it.name} × ${it.quantity}</div><div>₹${it.price*it.quantity}</div>`; checkoutItems.appendChild(div); });
+    document.getElementById('checkout-total').textContent = total;
+    selectPayment(null); document.getElementById('payment-confirm').style.display='none';
+  };
+
+  // update product card UI
+  function updateProductCardUI(id){
+    const actions = document.getElementById('actions-'+id);
+    const existing = findCartItem(id);
+    if(!actions) return;
+    if(existing && existing.quantity>0){
+      actions.innerHTML = `<div class="qty-box" id="qtybox-${id}" onclick="event.stopPropagation()"><button onclick="decreaseFromCard(event,'${id}')">−</button><div class="qty-number" id="qtynum-${id}">${existing.quantity}</div><button onclick="increaseFromCard(event,'${id}')">+</button></div>`;
+    } else {
+      actions.innerHTML = `<button class="btn btn-add" onclick="event.stopPropagation(); addToCartNow('${id}')">Add to Cart</button><button class="btn buy btn-buy" onclick="event.stopPropagation(); buyNow('${id}')">Buy Now</button>`;
+    }
+  }
+  window.increaseFromCard = function(e,id){ e.stopPropagation(); changeQtyFromCard(id,1); }
+  window.decreaseFromCard = function(e,id){ e.stopPropagation(); changeQtyFromCard(id,-1); }
+  function changeQtyFromCard(id,delta){
+    const item = findCartItem(id);
+    if(!item && delta>0) cart.push({ id: PRODUCTS[id].id, name: PRODUCTS[id].name, price: PRODUCTS[id].price, image: PRODUCTS[id].image, quantity: 1 });
+    else if(item){ item.quantity += delta; if(item.quantity<=0){ cart = cart.filter(x=>x.id !== id); } }
+    updateCartCount();
+    const numEl = document.getElementById('qtynum-'+id);
+    if(numEl){ const newItem = findCartItem(id); if(newItem) numEl.textContent = newItem.quantity; else updateProductCardUI(id);} else updateProductCardUI(id);
+    renderCart(); saveCart();
+  }
+
+  // render cart
+  function renderCart(){
+    const container = document.getElementById('cart-items'); container.innerHTML=''; let total=0;
+    cart.forEach((it,index)=>{ total += it.price * it.quantity; const row = document.createElement('div'); row.className='cart-row'; row.innerHTML = `<div class="cart-left"><img src="${it.image}" alt="${it.name}"><div><div class="cart-name">${it.name}</div><div style="color:#666;font-size:13px;">₹${it.price} each</div></div></div><div class="cart-controls"><div class="qty-box" onclick="event.stopPropagation()"><button onclick="cartDecrease(event, ${index})">−</button><div class="qty-number" id="cart-qty-${it.id}">${it.quantity}</div><button onclick="cartIncrease(event, ${index})">+</button></div></div>`; container.appendChild(row); });
+    document.getElementById('total').textContent = total; updateCartCount(); Object.keys(PRODUCTS).forEach(pid => updateProductCardUI(pid));
+  }
+  window.cartIncrease = function(e,idx){ e.stopPropagation(); cart[idx].quantity += 1; renderCart(); saveCart(); }
+  window.cartDecrease = function(e,idx){ e.stopPropagation(); cart[idx].quantity -= 1; if(cart[idx].quantity <= 0){ const id = cart[idx].id; cart.splice(idx,1); updateProductCardUI(id);} renderCart(); saveCart(); }
+
+  // search & category
+  window.searchProducts = function(){ const term = document.getElementById('search-bar').value.trim().toLowerCase(); document.querySelectorAll('.product-card').forEach(card=>{ const name = card.getAttribute('data-name').toLowerCase(); card.style.display = name.includes(term) ? 'block' : 'none'; }); }
+  window.filterCategory = function(cat){ document.querySelectorAll('.product-card').forEach(card=>{ if(cat==='All'){ card.style.display='block'; return;} card.style.display = card.getAttribute('data-category')===cat ? 'block' : 'none'; }); }
+
+  // payment selection & processing
+  let selectedPaymentMethod = null;
+  window.selectPayment = function(method){
+    selectedPaymentMethod = method;
+    document.getElementById('upi-details').style.display='none';
+    document.getElementById('card-details').style.display='none';
+    document.getElementById('netbank-details').style.display='none';
+    if(!method){ document.querySelectorAll('input[name="payment"]').forEach(r=>r.checked=false); return; }
+    document.querySelectorAll('input[name="payment"]').forEach(r=> r.checked = (r.value===method));
+    if(method==='upi') document.getElementById('upi-details').style.display='block';
+    if(method==='card') document.getElementById('card-details').style.display='block';
+    if(method==='netbank') document.getElementById('netbank-details').style.display='block';
+  };
+  window.processPayment = function(){
+    if(cart.length===0){ alert('Cart empty'); return; }
+    if(!selectedPaymentMethod){ alert('Select payment method'); return; }
+    if(selectedPaymentMethod==='upi'){ const upi = document.getElementById('upi-id').value.trim(); if(!upi){ alert('Enter UPI ID'); return; } }
+    if(selectedPaymentMethod==='card'){ const cnum=document.getElementById('card-number').value.trim(), cname=document.getElementById('card-name').value.trim(), cexp=document.getElementById('card-exp').value.trim(), cvv=document.getElementById('card-cvv').value.trim(); if(!cnum||!cname||!cexp||!cvv){ alert('Fill card details'); return; } }
+    if(selectedPaymentMethod==='netbank'){ const bank=document.getElementById('bank-select').value; if(!bank){ alert('Select bank'); return; } }
+    const payBtn = document.querySelector('#payment-section .btn.buy'); payBtn.disabled=true; payBtn.textContent='Processing...';
+    setTimeout(()=>{ document.getElementById('payment-confirm').style.display='block'; payBtn.disabled=false; payBtn.textContent='Proceed to Pay'; cart=[]; saveCart(); renderCart(); setTimeout(()=>{ showSection('home'); document.getElementById('payment-confirm').style.display='none'; },1300); },900);
+  };
+
+  // show section helper
+  window.showSection = function(section){
+    document.getElementById('home-section').classList.toggle('show', section==='home');
+    document.getElementById('product-details').classList.toggle('show', section==='product');
+    document.getElementById('cart-section').classList.toggle('show', section==='cart');
+    document.getElementById('payment-section').classList.toggle('show', section==='payment');
+    if(section==='home'){ document.getElementById('search-bar').style.display='block'; document.getElementById('category-tabs').style.display='flex'; } else { document.getElementById('search-bar').style.display='none'; document.getElementById('category-tabs').style.display='none'; }
+    if(section==='cart') renderCart();
+    if(section==='payment') proceedToPayment();
+  };
+
+  // init UI
+  window.initUI = function(){ cart = loadCartFromLocal(); Object.keys(PRODUCTS).forEach(pid => updateProductCardUI(pid)); renderCart(); refreshAccountUI(); };
+  window.addEventListener('DOMContentLoaded', initUI);
+
+  // small helper to toggle drawer (already exposed)
+  window.enlargeLogo = function(img){ img.style.transform = img.style.transform === 'scale(1.4)' ? 'scale(1)' : 'scale(1.4)'; };
+
 </script>
-
 </body>
 </html>
