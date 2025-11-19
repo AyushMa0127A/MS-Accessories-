@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MS Accessories – Shop</title>
+
+<style>
+/* GENERAL BODY */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  background: #f0f4f8;
+  color: #333;
+}
+
+/* HEADER */
+header {
+  background: #fff;
+  padding: 15px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+header img {
+  height: 50px;
+  transition: transform 0.3s ease;
+  cursor: pointer;
+}
+
+header img:hover {
+  transform: scale(1.1);
+}
+
+nav a {
+  margin-left: 20px;
+  text-decoration: none;
+  font-weight: bold;
+  color: #333;
+  transition: color 0.3s;
+}
+
+nav a:hover {
+  color: #007BFF;
+}
+
+main {
+  padding: 20px;
+}
+
+/* SEARCH BAR */
+#search-bar {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+}
+
+/* CATEGORY TABS */
+#category-tabs {
+  margin-bottom: 20px;
+}
+
+#category-tabs button {
+  padding: 8px 15px;
+  margin-right: 10px;
+  border: none;
+  border-radius: 20px;
+  background: #007BFF;
+  color: white;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+#category-tabs button:hover {
+  background: #0056b3;
+}
+
+/* PRODUCT GRID */
+#products {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* 2 items per row on mobile */
+  gap: 20px;
+}
+
+@media (min-width: 768px) {
+  #products {
+    grid-template-columns: repeat(4, 1fr); /* 4 items per row on desktop */
+  }
+}
+
+.product-card {
+  background: #fff;
+  padding: 15px;
+  border-radius: 15px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  text-align: center;
+  transition: transform 0.2s ease;
+  cursor: pointer;
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+}
+
+.product-card img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+button {
+  margin-top: 10px;
+  padding: 10px 15px;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+  background: #222;
+  color: white;
+  transition: all 0.3s;
+}
+
+button:hover {
+  background: #007BFF;
+  color: #fff;
+}
+
+/* PRODUCT DETAILS */
+#product-details {
+  display: none;
+  background: #fff;
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  margin-top: 20px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#product-details img {
+  width: 100%;
+  max-width: 300px;
+  border-radius: 10px;
+  display: block;
+  margin-bottom: 20px;
+}
+
+/* CART */
+#cart-section {
+  display: none;
+  background: #fff;
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  margin-top: 20px;
+}
+
+.cart-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 10px;
+  transition: background 0.2s;
+}
+
+.cart-row:hover {
+  background: #f0f4f8;
+}
+
+.cart-row img {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 5px;
+  margin-right: 10px;
+}
+
+.cart-row span {
+  flex: 1;
+  line-height: 1.2;
+}
+
+.cart-row input {
+  width: 50px;
+  margin-right: 5px;
+}
+
+.cart-row button {
+  padding: 5px 10px;
+  background: red;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+footer {
+  text-align: center;
+  padding: 20px;
+  background: #222;
+  color: white;
+  margin-top: 40px;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div style="display:flex;align-items:center;">
+    <img src="dummy.jpg" alt="MS Accessories Logo" onclick="enlargeLogo(this)">
+  </div>
+  <nav>
+    <a href="#" onclick="showSection('home')">Home</a>
+    <a href="#" onclick="showSection('cart')">Cart (<span id='cart-count'>0</span>)</a>
+  </nav>
+</header>
+
+<main>
+
+<!-- SEARCH BAR -->
+<input type="text" id="search-bar" placeholder="Search products..." onkeyup="searchProducts()">
+
+<!-- CATEGORY TABS -->
+<div id="category-tabs">
+  <button onclick="filterCategory('All')">All</button>
+  <button onclick="filterCategory('Necklace')">Necklace</button>
+  <button onclick="filterCategory('Earrings')">Earrings</button>
+  <button onclick="filterCategory('Bracelets')">Bracelets</button>
+  <button onclick="filterCategory('Combo Boxes')">Combo Boxes</button>
+</div>
+
+<!-- PRODUCT LIST -->
+<section id="home-section">
+  <h2>Products</h2>
+  <div id="products">
+
+    <div class="product-card" data-name="Gold Necklace" data-category="Necklace" onclick="viewProduct('Gold Necklace',1200,'dummy.jpg')">
+      <img src="dummy.jpg">
+      <h3>Gold Necklace</h3>
+      <p>₹1200</p>
+      <button onclick="event.stopPropagation(); addToCartNow('Gold Necklace',1200,'dummy.jpg')">Add to Cart</button>
+      <button onclick="event.stopPropagation(); buyNow('Gold Necklace',1200,'dummy.jpg')">Buy Now</button>
+    </div>
+
+    <div class="product-card" data-name="Silver Earrings" data-category="Earrings" onclick="viewProduct('Silver Earrings',499,'dummy.jpg')">
+      <img src="dummy.jpg">
+      <h3>Silver Earrings</h3>
+      <p>₹499</p>
+      <button onclick="event.stopPropagation(); addToCartNow('Silver Earrings',499,'dummy.jpg')">Add to Cart</button>
+      <button onclick="event.stopPropagation(); buyNow('Silver Earrings',499,'dummy.jpg')">Buy Now</button>
+    </div>
+
+    <div class="product-card" data-name="Leather Bracelet" data-category="Bracelets" onclick="viewProduct('Leather Bracelet',799,'dummy.jpg')">
+      <img src="dummy.jpg">
+      <h3>Leather Bracelet</h3>
+      <p>₹799</p>
+      <button onclick="event.stopPropagation(); addToCartNow('Leather Bracelet',799,'dummy.jpg')">Add to Cart</button>
+      <button onclick="event.stopPropagation(); buyNow('Leather Bracelet',799,'dummy.jpg')">Buy Now</button>
+    </div>
+
+    <div class="product-card" data-name="Combo Box Special" data-category="Combo Boxes" onclick="viewProduct('Combo Box Special',1999,'dummy.jpg')">
+      <img src="dummy.jpg">
+      <h3>Combo Box Special</h3>
+      <p>₹1999</p>
+      <button onclick="event.stopPropagation(); addToCartNow('Combo Box Special',1999,'dummy.jpg')">Add to Cart</button>
+      <button onclick="event.stopPropagation(); buyNow('Combo Box Special',1999,'dummy.jpg')">Buy Now</button>
+    </div>
+
+  </div>
+</section>
+
+<!-- PRODUCT DETAILS -->
+<section id="product-details">
+  <button onclick="backHome()">← Back</button>
+  <h2 id="detail-name"></h2>
+  <img id="detail-image" src="">
+  <p id="detail-price"></p>
+  <button onclick="addToCart()">Add to Cart</button>
+  <button onclick="buyNow(selectedProduct.name, selectedProduct.price, selectedProduct.image)">Buy Now</button>
+</section>
+
+<!-- CART -->
+<section id="cart-section">
+  <h2>Your Cart</h2>
+  <div id="cart-items"></div>
+  <h3>Total: ₹<span id="total">0</span></h3>
+</section>
+
+</main>
+
+<footer>
+  © 2025 MS Accessories
+</footer>
+
+<script>
+// LOGO ENLARGE
+function enlargeLogo(img){
+  img.style.transform = img.style.transform === "scale(2)" ? "scale(1)" : "scale(2)";
+}
+
+// CART
+let selectedProduct = {};
+let cart = [];
+
+// SHOW SECTIONS
+function showSection(section) {
+  const homeSection = document.getElementById("home-section");
+  const productSection = document.getElementById("product-details");
+  const cartSection = document.getElementById("cart-section");
+  const searchBar = document.getElementById("search-bar");
+  const categoryTabs = document.getElementById("category-tabs");
+
+  homeSection.style.display = section==='home' ? 'block':'none';
+  productSection.style.display = 'none';
+  cartSection.style.display = section==='cart' ? 'block':'none';
+
+  if(section==='home'){
+    searchBar.style.display='block';
+    categoryTabs.style.display='block';
+  }else{
+    searchBar.style.display='none';
+    categoryTabs.style.display='none';
+  }
+
+  if(section==='cart') loadCart();
+}
+
+// VIEW PRODUCT
+function viewProduct(name, price, image) {
+  selectedProduct = {name, price, image};
+  document.getElementById("detail-name").textContent = name;
+  document.getElementById("detail-image").src = image;
+  document.getElementById("detail-price").textContent = "Price: ₹"+price;
+  document.getElementById("home-section").style.display='none';
+  document.getElementById("product-details").style.display='block';
+  document.getElementById("search-bar").style.display='none';
+  document.getElementById("category-tabs").style.display='none';
+}
+
+// BACK HOME
+function backHome() {
+  document.getElementById("product-details").style.display='none';
+  document.getElementById("home-section").style.display='block';
+  document.getElementById("search-bar").style.display='block';
+  document.getElementById("category-tabs").style.display='block';
+}
+
+// ADD TO CART
+function addToCart() {
+  cart.push({...selectedProduct, quantity:1});
+  updateCartCount();
+  alert("Added to cart!");
+}
+function addToCartNow(name, price, image){
+  cart.push({name, price, image, quantity:1});
+  updateCartCount();
+  alert("Added to cart!");
+}
+
+// BUY NOW
+function buyNow(name, price, image){
+  cart.push({name, price, image, quantity:1});
+  updateCartCount();
+  showSection('cart');
+}
+
+// UPDATE CART COUNT
+function updateCartCount(){
+  document.getElementById("cart-count").textContent = cart.length;
+}
+
+// LOAD CART
+function loadCart(){
+  let container = document.getElementById("cart-items");
+  container.innerHTML="";
+  let total=0;
+  cart.forEach((item,index)=>{
+    total += item.price*item.quantity;
+    container.innerHTML+=`
+      <div class="cart-row" onclick="viewProduct('${item.name}',${item.price},'${item.image}')">
+        <img src="${item.image}">
+        <span>${item.name}</span>
+        <input type="number" min="1" value="${item.quantity}" onchange="changeQty(${index},this.value)" onclick="event.stopPropagation()">
+        <button onclick="removeItem(${index}); event.stopPropagation();">X</button>
+      </div>
+    `;
+  });
+  document.getElementById("total").textContent=total;
+}
+
+// EDIT CART
+function changeQty(index,newQty){
+  cart[index].quantity = parseInt(newQty);
+  loadCart();
+}
+function removeItem(index){
+  cart.splice(index,1);
+  updateCartCount();
+  loadCart();
+}
+
+// SEARCH
+function searchProducts(){
+  let search = document.getElementById("search-bar").value.toLowerCase();
+  document.querySelectorAll(".product-card").forEach(card=>{
+    let name = card.getAttribute("data-name").toLowerCase();
+    card.style.display = name.includes(search) ? "block":"none";
+  });
+}
+
+// CATEGORY FILTER
+function filterCategory(category){
+  document.querySelectorAll(".product-card").forEach(card=>{
+    if(category==='All'){card.style.display='block';
+    }else{
+      card.style.display = card.getAttribute("data-category")===category ? 'block':'none';
+    }
+  });
+}
+</script>
+
+</body>
+</html>
