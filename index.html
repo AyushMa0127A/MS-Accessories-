@@ -1,22 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bug Program - Part 1</title>
-    <!-- Linking the CSS part -->
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MS Accessories – Home</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Welcome to the Bug Program</h1>
 
-    <!-- Main container for the program -->
-    <div id="app">
-        <!-- Content from JS will be injected here -->
-    </div>
+<header>
+  <div style="display:flex;align-items:center;">
+    <img src="dummy.jpg" alt="MS Accessories Logo" onclick="enlargeLogo(this)">
+  </div>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="cart.html">Cart (<span id="cart-count">0</span>)</a>
+    <a href="profile.html">Profile</a>
+  </nav>
+</header>
 
-    <!-- Linking the JS parts -->
-    <script src="part2.js"></script>
-    <script src="part3.js"></script>
+<main>
+  <!-- Search bar -->
+  <input type="text" id="search-bar" placeholder="Search products..." onkeyup="searchProducts()">
+
+  <!-- Category tabs -->
+  <div id="category-tabs">
+    <button onclick="loadProducts('All')">All</button>
+    <button onclick="loadProducts('Necklace')">Necklace</button>
+    <button onclick="loadProducts('Earrings')">Earrings</button>
+    <button onclick="loadProducts('Bracelets')">Bracelets</button>
+    <button onclick="loadProducts('Combo Boxes')">Combo Boxes</button>
+  </div>
+
+  <!-- Product container -->
+  <div id="product-container">
+    <!-- Products will be loaded from products.html via JS -->
+  </div>
+</main>
+
+<footer>
+  © 2025 MS Accessories
+</footer>
+
+<script>
+// Logo enlarge
+function enlargeLogo(img){
+  img.style.transform = img.style.transform === "scale(2)" ? "scale(1)" : "scale(2)";
+}
+
+// Load products from products.html
+async function loadProducts(category = 'All') {
+  const container = document.getElementById('product-container');
+  const response = await fetch('products.html');
+  let html = await response.text();
+
+  container.innerHTML = html;
+
+  // Hide products that don't match the category
+  if(category !== 'All'){
+    document.querySelectorAll('.product-card').forEach(card=>{
+      if(card.dataset.category !== category) card.style.display = 'none';
+    });
+  }
+}
+
+// Dummy search function (can filter product names)
+function searchProducts(){
+  let search = document.getElementById("search-bar").value.toLowerCase();
+  document.querySelectorAll(".product-card").forEach(card=>{
+    let name = card.getAttribute("data-name").toLowerCase();
+    card.style.display = name.includes(search) ? "block":"none";
+  });
+}
+
+// Initial load
+loadProducts('All');
+</script>
+
 </body>
 </html>
