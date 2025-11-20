@@ -23,18 +23,85 @@ const provider = new GoogleAuthProvider();
 // ---------- App state ----------
 let firebaseUser = null; // if signed in with Google, this holds auth user object
 
-// ---------- Utilities used by app (cart, products) ----------
+// ---------- Cart Utilities ----------
 function saveCartToLocal(cart){ localStorage.setItem('msacc_cart_v1', JSON.stringify(cart)); }
 function loadCartFromLocal(){ try{ return JSON.parse(localStorage.getItem('msacc_cart_v1')) || []; }catch(e){return []}}
 
-// ---------- Hook Firebase auth changes ----------
+/**
+ * Merges two carts (e.g., a local one and a cloud one), combining quantities
+ * of duplicate items.
+ */
+function mergeCarts(cartA, cartB) {
+  const mergedMap = new Map();
+
+  // Process first cart
+  cartA.forEach(item => {
+    // We must clone the item to avoid modifying the original array
+    mergedMap.set(item.id, { ...item }); 
+  });
+
+  // Process and merge second cart
+  cartB.forEach(localItem => {
+    if (mergedMap.has(localItem.id)) {
+      // Item exists, just add quantity
+      const existingItem = mergedMap.get(localItem.id);
+      existingItem.quantity += localItem.quantity;
+    } else {
+      // New item, add it (cloned)
+      mergedMap.set(localItem.id, { ...localItem });
+    }
+  });
+
+  // Convert the Map's values back into an array
+  return Array.from(mergedMap.values());
+}
+
+/**
+ * Loads the user's cart from their Firestore document.
+ */
+async function loadCartFromCloud() {
+  if (!firebaseUser) return []; // No user, no cloud cart
+  try {
+    const udoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+    if (udoc.exists() && udoc.data().cart) {
+      // Return the cart array saved in their profile
+      return udoc.data().cart; 
+    }
+    return []; // No cart saved in cloud
+  } catch (e) { 
+    console.error("Error loading cart from cloud: ", e); 
+    return []; // Return empty on error
+  }
+}
+
+// ---------- Hook Firebase auth changes (WITH CART MERGE LOGIC) ----------
 onAuthStateChanged(auth, async (user) => {
   firebaseUser = user || null;
   if(user){
-    // load Firestore user doc and update UI
+    // ----------------------------------------------
+    // 1. USER IS LOGGED IN
+    // ----------------------------------------------
+
+    // --- NEW CART MERGE LOGIC ---
+    const localCart = loadCartFromLocal();
+    const cloudCart = await loadCartFromCloud();
+
+    // Merge local guest cart into their cloud cart
+    cart = mergeCarts(cloudCart, localCart); // Global cart variable
+    
+    // If the local cart had items, save the new merged cart to cloud
+    // and clear the local cart.
+    if (localCart.length > 0) {
+      saveCart(); // This will now save to cloud
+      saveCartToLocal([]); // Clear the local cart
+    }
+    // --- END OF NEW CART LOGIC ---
+    
+    
+    // --- Existing profile UI logic (unchanged) ---
     const udoc = await getDoc(doc(db, 'users', user.uid));
     const data = udoc.exists() ? udoc.data() : null;
-    // show logged-in UI
+    
     document.getElementById('account-logged-out').style.display='none';
     document.getElementById('account-logged-in').style.display='block';
     document.getElementById('account-name-display').textContent = (data && data.name) ? data.name : user.displayName || 'User';
@@ -45,23 +112,40 @@ onAuthStateChanged(auth, async (user) => {
     document.getElementById('pf-email').value = user.email;
     document.getElementById('pf-phone').value = (data && data.phone) ? data.phone : '';
     document.getElementById('pf-address').value = (data && data.address) ? data.address : '';
-    // profile pic
+    
     const picBox = document.getElementById('profile-pic-edit'); picBox.innerHTML='';
     if(data && data.photo) {
       const img = document.createElement('img'); img.src = data.photo; picBox.appendChild(img);
     } else if(user.photoURL){
       const img = document.createElement('img'); img.src = user.photoURL; picBox.appendChild(img);
     } else { picBox.innerHTML = '<span style="font-weight:800;color:#666">A</span>'; }
-    // account bubble
+    
     updateAccountBubble({ name: document.getElementById('pf-name').value });
+
+    // --- Finally, re-render the cart with the new merged data ---
+    renderCart();
+
   } else {
-    // not signed in with Firebase — show logged-out view but do not delete local accounts
+    // ----------------------------------------------
+    // 2. USER IS LOGGED OUT
+    // ----------------------------------------------
+
+    // --- NEW LOGOUT CART LOGIC ---
+    // User signed out. Their global 'cart' is no longer valid.
+    // Load the local "guest" cart.
+    cart = loadCartFromLocal();
+    // --- END OF NEW LOGIC ---
+
+    // --- Existing logged-out UI logic (unchanged) ---
     document.getElementById('account-logged-out').style.display='block';
     document.getElementById('account-logged-in').style.display='none';
     document.getElementById('account-name-display').textContent = 'Guest';
     document.getElementById('account-email-display').textContent = 'Not signed in';
     document.getElementById('profile-pic-box').innerHTML = '<span id="profile-initials" style="font-weight:800;color:#666">A</span>';
     updateAccountBubble(null);
+    
+    // --- Finally, re-render the cart with the guest data ---
+    renderCart();
   }
 });
 
@@ -79,7 +163,7 @@ window.googleSignIn = async function(){
       address: '',
       updatedAt: new Date()
     }, { merge: true });
-    // UI will update via onAuthStateChanged
+    // UI will update via onAuthStateChanged (which also handles cart merge)
   }catch(err){
     console.error('Google sign-in error', err);
     alert('Google sign-in failed: ' + (err.message || err));
@@ -90,44 +174,67 @@ window.googleSignIn = async function(){
 window.logout = async function(){
   try{
     if(firebaseUser){ await signOut(auth); firebaseUser = null; }
-    // also show local logged-out UI
-    document.getElementById('account-logged-out').style.display='block';
-    document.getElementById('account-logged-in').style.display='none';
-    updateAccountBubble(null);
+    // UI and cart will update via onAuthStateChanged
     toggleAccountDrawer(); // close drawer
   }catch(e){ console.error(e); }
 };
 
-// ---------- Save profile (if firebase user signed in -> update Firestore; else update localStorage account) ----------
+// ---------- Save profile (with local pic fix) ----------
 window.saveProfile = async function(){
   // required fields check
   const name = document.getElementById('pf-name').value.trim();
   const phone = document.getElementById('pf-phone').value.trim();
   const address = document.getElementById('pf-address').value.trim();
   if(!name || !phone || !address){ alert('Name, phone and address required.'); return; }
+  
   if(firebaseUser){
-    // update Firestore
+    // ------------------------------------
+    // FIREBASE USER (Cloud)
+    // ------------------------------------
     const uid = firebaseUser.uid;
-    // handle pic
     const picInput = document.getElementById('pf-pic');
+    
     if(picInput && picInput.files && picInput.files[0]){
+      // New Pic: Read as Data URL and update doc
       const reader = new FileReader();
       reader.onload = async (ev) => {
         await updateDoc(doc(db,'users',uid), { name, phone, address, photo: ev.target.result, updatedAt: new Date() });
         alert('Profile updated (cloud).');
+        refreshAccountUI(); // Refresh UI after update
       };
       reader.readAsDataURL(picInput.files[0]);
     } else {
+      // No New Pic: Just update the text fields
       await updateDoc(doc(db,'users',uid), { name, phone, address, updatedAt: new Date() });
       alert('Profile updated (cloud).');
+      refreshAccountUI(); // Refresh UI after update
     }
   } else {
-    // local account flow (unchanged) - save to localStorage under key msacc_local_user
-    const local = { name, email: document.getElementById('pf-email').value || '', phone, address, pic: null };
-    localStorage.setItem('msacc_local_user', JSON.stringify(local));
-    alert('Profile updated locally.');
+    // ------------------------------------
+    // LOCAL USER (localStorage)
+    // ------------------------------------
+    const email = document.getElementById('pf-email').value || '';
+    const picInput = document.getElementById('pf-pic');
+    const existingPic = (loadLocalAccount() || {}).pic || null; // Get existing pic
+
+    if (picInput && picInput.files && picInput.files[0]) {
+      // New Pic: Read as Data URL and save to local
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const accountObj = { name, email, phone, address, pic: ev.target.result };
+        saveLocalAccount(accountObj);
+        alert('Profile updated locally (with new pic).');
+        refreshAccountUI(); // Refresh UI after update
+      };
+      reader.readAsDataURL(picInput.files[0]);
+    } else {
+      // No New Pic: Save other data but *keep the existing pic*
+      const accountObj = { name, email, phone, address, pic: existingPic };
+      saveLocalAccount(accountObj);
+      alert('Profile updated locally.');
+      refreshAccountUI(); // Refresh UI after update
+    }
   }
-  refreshAccountUI();
 };
 
 // ---------- Helper to update account bubble initials ----------
@@ -140,13 +247,11 @@ function updateAccountBubble(acc){
   bubble.textContent = initials;
 }
 
-// ---------- Reuse/refactor of the previous local account behavior (keeps your local signup/login intact) ----------
-// Local account keys
+// ---------- Local Account Functions (unchanged) ----------
 const LOCAL_ACCOUNT_KEY = 'msacc_local_user_v1';
 function loadLocalAccount(){ try{ return JSON.parse(localStorage.getItem(LOCAL_ACCOUNT_KEY)) || null }catch(e){ return null } }
 function saveLocalAccount(obj){ localStorage.setItem(LOCAL_ACCOUNT_KEY, JSON.stringify(obj)); }
 
-// Local signup (keeps working as before)
 window.showSignup = function(){ document.getElementById('signup-block').style.display='block'; document.getElementById('login-block').style.display='none'; }
 window.hideSignup = function(){ document.getElementById('signup-block').style.display='none'; document.getElementById('login-block').style.display='block'; }
 
@@ -230,7 +335,7 @@ window.toggleAccountDrawer = function(){
   if(accountOpen) refreshAccountUI();
 };
 
-// ---------- CART & SHOP logic (same as before, with local cart persistence) ----------
+// ---------- CART & SHOP logic ----------
 const PRODUCTS = {
   p1:{id:'p1',name:'Gold Necklace',price:1200,image:'dummy.jpg',category:'Necklace'},
   p2:{id:'p2',name:'Silver Earrings',price:499,image:'dummy.jpg',category:'Earrings'},
@@ -238,8 +343,25 @@ const PRODUCTS = {
   p4:{id:'p4',name:'Combo Box Special',price:1999,image:'dummy.jpg',category:'Combo Boxes'}
 };
 
-let cart = loadCartFromLocal(); // persisted in localStorage
-function saveCart(){ saveCartToLocal(cart); }
+let cart = loadCartFromLocal(); // persisted in localStorage or cloud (set by onAuthStateChanged)
+
+/**
+ * Saves the cart. If the user is logged in (firebaseUser exists),
+ * it saves to their Firestore doc. Otherwise, it saves to localStorage.
+ */
+function saveCart(){
+  if (firebaseUser) {
+    // Save to cloud (asynchronously)
+    // We use updateDoc to avoid overwriting other profile fields
+    updateDoc(doc(db, 'users', firebaseUser.uid), {
+      cart: cart
+    }).catch(e => console.error("Error saving cart to cloud: ", e));
+  } else {
+    // Save to local
+    saveCartToLocal(cart);
+  }
+}
+
 function findCartItem(id){ return cart.find(it=>it.id===id); }
 function updateCartCount(){ const totalQty = cart.reduce((s,it)=>s+it.quantity,0); document.getElementById('cart-count').textContent = totalQty; saveCart(); }
 
@@ -276,7 +398,7 @@ window.addToCartNow = function(id){
   const existing = findCartItem(id);
   if(existing) existing.quantity += 1;
   else cart.push({ id: prod.id, name: prod.name, price: prod.price, image: prod.image, quantity: 1 });
-  updateCartCount(); updateProductCardUI(id); renderCart(); saveCart();
+  updateCartCount(); updateProductCardUI(id); renderCart(); // saveCart() is called by updateCartCount()
 };
 window.addToCart = function(){ if(!window.selectedProduct || !window.selectedProduct.id) return; addToCartNow(window.selectedProduct.id); };
 
@@ -318,17 +440,23 @@ function changeQtyFromCard(id,delta){
   updateCartCount();
   const numEl = document.getElementById('qtynum-'+id);
   if(numEl){ const newItem = findCartItem(id); if(newItem) numEl.textContent = newItem.quantity; else updateProductCardUI(id);} else updateProductCardUI(id);
-  renderCart(); saveCart();
+  renderCart(); // saveCart() is called by updateCartCount()
 }
 
 // render cart
 function renderCart(){
   const container = document.getElementById('cart-items'); container.innerHTML=''; let total=0;
-  cart.forEach((it,index)=>{ total += it.price * it.quantity; const row = document.createElement('div'); row.className='cart-row'; row.innerHTML = `<div class="cart-left"><img src="${it.image}" alt="${it.name}"><div><div class="cart-name">${it.name}</div><div style="color:#666;font-size:13px;">₹${it.price} each</div></div></div><div class="cart-controls"><div class="qty-box" onclick="event.stopPropagation()"><button onclick="cartDecrease(event, ${index})">−</button><div class="qty-number" id="cart-qty-${it.id}">${it.quantity}</div><button onclick="cartIncrease(event, ${index})">+</button></div></div>`; container.appendChild(row); });
-  document.getElementById('total').textContent = total; updateCartCount(); Object.keys(PRODUCTS).forEach(pid => updateProductCardUI(pid));
+  cart.forEach((it,index)=>{ total += it.price * it.quantity; const row = document.createElement('div'); row.className='cart-row'; row.innerHTML = `<div class="cart-left"><img src="${it.image}" alt="${it.name}"><div><div class.cart-name">${it.name}</div><div style="color:#666;font-size:13px;">₹${it.price} each</div></div></div><div class="cart-controls"><div class="qty-box" onclick="event.stopPropagation()"><button onclick="cartDecrease(event, ${index})">−</button><div class="qty-number" id="cart-qty-${it.id}">${it.quantity}</div><button onclick="cartIncrease(event, ${index})">+</button></div></div>`; container.appendChild(row); });
+  document.getElementById('total').textContent = total; 
+  // Update count and save cart (if not already done)
+  const totalQty = cart.reduce((s,it)=>s+it.quantity,0); 
+  document.getElementById('cart-count').textContent = totalQty;
+  saveCart();
+  // Refresh product cards to show qty boxes
+  Object.keys(PRODUCTS).forEach(pid => updateProductCardUI(pid));
 }
-window.cartIncrease = function(e,idx){ e.stopPropagation(); cart[idx].quantity += 1; renderCart(); saveCart(); }
-window.cartDecrease = function(e,idx){ e.stopPropagation(); cart[idx].quantity -= 1; if(cart[idx].quantity <= 0){ const id = cart[idx].id; cart.splice(idx,1); updateProductCardUI(id);} renderCart(); saveCart(); }
+window.cartIncrease = function(e,idx){ e.stopPropagation(); cart[idx].quantity += 1; renderCart(); } // renderCart() calls saveCart()
+window.cartDecrease = function(e,idx){ e.stopPropagation(); cart[idx].quantity -= 1; if(cart[idx].quantity <= 0){ const id = cart[idx].id; cart.splice(idx,1); } renderCart(); } // renderCart() calls saveCart()
 
 // search & category
 window.searchProducts = function(){ const term = document.getElementById('search-bar').value.trim().toLowerCase(); document.querySelectorAll('.product-card').forEach(card=>{ const name = card.getAttribute('data-name').toLowerCase(); card.style.display = name.includes(term) ? 'block' : 'none'; }); }
@@ -369,7 +497,12 @@ window.showSection = function(section){
 };
 
 // init UI
-window.initUI = function(){ cart = loadCartFromLocal(); Object.keys(PRODUCTS).forEach(pid => updateProductCardUI(pid)); renderCart(); refreshAccountUI(); };
+window.initUI = function(){ 
+  // cart is loaded by onAuthStateChanged, which runs on page load
+  // so we just need to render
+  renderCart(); 
+  refreshAccountUI(); 
+};
 window.addEventListener('DOMContentLoaded', initUI);
 
 // small helper to toggle drawer (already exposed)
