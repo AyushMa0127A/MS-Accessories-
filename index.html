@@ -49,7 +49,6 @@
         <p class="price">₹1200</p>
         <div class="card-actions" id="actions-p1">
           <button class="btn btn-add" onclick="event.stopPropagation(); addToCartNow('p1')">Add to Cart</button>
-          <button class="btn buy btn-buy" onclick="event.stopPropagation(); buyNow('p1')">Buy Now</button>
         </div>
       </div>
 
@@ -59,7 +58,6 @@
         <p class="price">₹499</p>
         <div class="card-actions" id="actions-p2">
           <button class="btn btn-add" onclick="event.stopPropagation(); addToCartNow('p2')">Add to Cart</button>
-          <button class="btn buy btn-buy" onclick="event.stopPropagation(); buyNow('p2')">Buy Now</button>
         </div>
       </div>
 
@@ -69,7 +67,6 @@
         <p class="price">₹799</p>
         <div class="card-actions" id="actions-p3">
           <button class="btn btn-add" onclick="event.stopPropagation(); addToCartNow('p3')">Add to Cart</button>
-          <button class="btn buy btn-buy" onclick="event.stopPropagation(); buyNow('p3')">Buy Now</button>
         </div>
       </div>
 
@@ -79,7 +76,6 @@
         <p class="price">₹1999</p>
         <div class="card-actions" id="actions-p4">
           <button class="btn btn-add" onclick="event.stopPropagation(); addToCartNow('p4')">Add to Cart</button>
-          <button class="btn buy btn-buy" onclick="event.stopPropagation(); buyNow('p4')">Buy Now</button>
         </div>
       </div>
 
@@ -93,7 +89,6 @@
     <p id="detail-price"></p>
     <div style="margin-top:12px;">
       <button class="btn" onclick="addToCart()">Add to Cart</button>
-      <button class="btn buy" onclick="buyNow(selectedProduct.id)">Buy Now</button>
     </div>
   </section>
 
@@ -102,12 +97,42 @@
     <div id="cart-items"></div>
     <div class="cart-total">Total: ₹<span id="total">0</span></div>
     <div style="margin-top:12px;">
-      <button class="btn buy" onclick="proceedToPayment()">Proceed to Payment (Buy Now)</button>
+      <button class="btn buy" onclick="goToShipping()">Proceed to Payment (Buy Now)</button>
     </div>
   </section>
 
+  <section id="shipping-section" class="section-card">
+    <h2>Step 1: Delivery Details</h2>
+    <div style="margin-bottom:15px;padding:12px;border-radius:8px;background:#fbfbff;border:1px solid #eef0ff;">
+      Please enter your delivery address and contact information.
+    </div>
+    
+    <div class="input-row">
+      <label for="shipping-name">Full Name *</label>
+      <input id="shipping-name" placeholder="Full Name">
+    </div>
+    <div class="input-row">
+      <label for="shipping-phone">Phone Number *</label>
+      <input id="shipping-phone" placeholder="10-digit Phone Number" type="tel">
+    </div>
+    <div class="input-row">
+      <label for="shipping-address">Full Delivery Address *</label>
+      <textarea id="shipping-address" rows="3" placeholder="House/Flat No., Street, City, Pincode"></textarea>
+    </div>
+    <div class="input-row">
+      <label for="shipping-landmark">Nearby Important Location (Landmark)</label>
+      <input id="shipping-landmark" placeholder="e.g., Near City Mall, Opposite SBI Bank">
+    </div>
+
+    <div style="margin-top:14px;display:flex;gap:10px;align-items:center;">
+      <button class="btn buy" onclick="confirmShippingDetails()">Continue to Payment</button>
+      <button class="btn" onclick="showSection('cart')">Back to Cart</button>
+    </div>
+    <div id="shipping-error" style="color:red;margin-top:8px;display:none;"></div>
+  </section>
+
   <section id="payment-section" class="section-card">
-    <h2>Checkout — Payment Options</h2>
+    <h2>Step 2: Choose Payment Method</h2>
 
     <div style="margin:10px 0 14px;padding:12px;border-radius:8px;background:#fbfbff;border:1px solid #eef0ff;">
       <strong>Order summary</strong>
@@ -195,7 +220,7 @@
 
     <div style="margin-top:14px;display:flex;gap:10px;align-items:center;">
       <button class="btn buy" onclick="processPayment()">Proceed to Pay</button>
-      <button class="btn" onclick="showSection('cart')">Back to Cart</button>
+      <button class="btn" onclick="showSection('shipping-section')">Back to Delivery Details</button>
     </div>
 
     <div id="payment-confirm" class="confirm-banner">Payment processed (mock). Order placed — thank you!</div>
@@ -208,7 +233,6 @@
     <div class="drawer-title">Account</div>
     <button class="close-drawer" onclick="toggleAccountDrawer()">✕</button>
   </div>
-
   <div style="display:flex;gap:12px;align-items:center;margin-bottom:10px">
     <div class="profile-pic" id="profile-pic-box"><span id="profile-initials" style="font-weight:800;color:#666">A</span></div>
     <div style="flex:1">
@@ -216,17 +240,13 @@
       <div id="account-email-display" style="font-size:13px;color:#666">Not signed in</div>
     </div>
   </div>
-
   <div id="account-logged-out">
     <div style="margin-bottom:8px;font-weight:700">Welcome</div>
-
     <div style="margin-bottom:10px">
       <button class="btn buy" onclick="googleSignIn()">Sign in with Google</button>
       <div class="small-muted" style="margin-top:6px">Sign in with Google to keep your account across devices.</div>
     </div>
-
     <div style="height:1px;background:#eee;margin:12px 0"></div>
-
     <div class="login-block" id="login-block">
       <div style="font-weight:700;margin-bottom:6px">Log in (Email only)</div>
       <div class="input-row"><label>Email</label><input id="login-email" placeholder="your@email.com"></div>
@@ -236,7 +256,6 @@
       </div>
       <div class="small-muted">Local login stores data on this browser only.</div>
     </div>
-
     <div id="signup-block" style="display:none;margin-top:12px">
       <div style="font-weight:700;margin-bottom:6px">Create account (Local)</div>
       <div class="input-row"><label>Name *</label><input id="su-name" placeholder="Full name"></div>
@@ -251,10 +270,8 @@
       <div class="small-muted">Fields marked * are required.</div>
     </div>
   </div>
-
   <div id="account-logged-in" style="display:none">
     <div style="font-weight:700;margin-bottom:8px">Your profile</div>
-
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
       <div class="profile-pic" id="profile-pic-edit"></div>
       <div style="flex:1">
@@ -262,13 +279,11 @@
         <div style="font-size:13px;color:#666" id="profile-email-edit">email</div>
       </div>
     </div>
-
     <div class="input-row"><label>Name *</label><input id="pf-name"></div>
     <div class="input-row"><label>Email (not editable for cloud users)</label><input id="pf-email" disabled></div>
     <div class="input-row"><label>Phone *</label><input id="pf-phone"></div>
     <div class="input-row"><label>Address *</label><textarea id="pf-address" rows="3"></textarea></div>
     <div class="input-row"><label>Change profile picture</label><input id="pf-pic" type="file" accept="image/*"></div>
-
     <div class="drawer-actions">
       <button class="btn" onclick="saveProfile()">Save changes</button>
       <button class="btn" onclick="logout()">Log out</button>
