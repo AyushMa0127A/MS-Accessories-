@@ -102,8 +102,34 @@
     <div id="cart-items"></div>
     <div class="cart-total">Total: ₹<span id="total">0</span></div>
     <div style="margin-top:12px;">
-      <button class="btn buy" onclick="proceedToPayment()">Proceed to Payment (Buy Now)</button>
+      <button class="btn buy" onclick="goToShipping()">Proceed to Payment (Buy Now)</button>
     </div>
+  </section>
+  
+  <section id="shipping-section" class="section-card">
+    <h2>Checkout — Shipping Details</h2>
+    <div style="margin-bottom:15px;padding:12px;border-radius:8px;background:#fbfbff;border:1px solid #eef0ff;">
+      Please confirm your delivery address and contact information.
+    </div>
+    
+    <div class="input-row">
+      <label for="shipping-name">Full Name *</label>
+      <input id="shipping-name" placeholder="Full Name">
+    </div>
+    <div class="input-row">
+      <label for="shipping-phone">Phone Number *</label>
+      <input id="shipping-phone" placeholder="10-digit Phone Number" type="tel">
+    </div>
+    <div class="input-row">
+      <label for="shipping-address">Delivery Address *</label>
+      <textarea id="shipping-address" rows="3" placeholder="House/Flat No., Street, Landmark, City, Pincode"></textarea>
+    </div>
+
+    <div style="margin-top:14px;display:flex;gap:10px;align-items:center;">
+      <button class="btn buy" onclick="confirmShippingDetails()">Continue to Payment</button>
+      <button class="btn" onclick="showSection('cart')">Back to Cart</button>
+    </div>
+    <div id="shipping-error" style="color:red;margin-top:8px;display:none;"></div>
   </section>
 
   <section id="payment-section" class="section-card">
@@ -195,7 +221,7 @@
 
     <div style="margin-top:14px;display:flex;gap:10px;align-items:center;">
       <button class="btn buy" onclick="processPayment()">Proceed to Pay</button>
-      <button class="btn" onclick="showSection('cart')">Back to Cart</button>
+      <button class="btn" onclick="showSection('shipping-section')">Back to Shipping</button>
     </div>
 
     <div id="payment-confirm" class="confirm-banner">Payment processed (mock). Order placed — thank you!</div>
@@ -279,7 +305,190 @@
 
 <footer class="footer">© 2025 MS Accessories</footer>
 
-<script type="module" src="script.js"></script>
+<script>
+    // --- MOCK/PLACEHOLDER DATA & CORE FUNCTIONS ---
+    // You would typically get this data from Firebase or local storage.
+    const productsData = {
+        'p1': { name: 'Gold Necklace', price: 1200 },
+        'p2': { name: 'Silver Earrings', price: 499 },
+        'p3': { name: 'Leather Bracelet', price: 799 },
+        'p4': { name: 'Combo Box Special', price: 1999 }
+    };
+
+    let cartItems = JSON.parse(localStorage.getItem('cart')) || []; // Mock cart state
+    let selectedProduct = null; // Mock for product details page
+    let selectedPaymentMethod = '';
+    
+    // Core function to switch between sections
+    function showSection(sectionId) {
+        document.querySelectorAll('main section').forEach(section => {
+            section.classList.remove('show');
+        });
+        const targetSection = document.getElementById(sectionId);
+        if (targetSection) {
+            targetSection.classList.add('show');
+            window.scrollTo(0, 0); // Scroll to top of the new section
+        }
+    }
+    
+    function updateCartDisplay() {
+        const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        document.getElementById('cart-count').textContent = cartItems.length;
+        document.getElementById('total').textContent = total.toFixed(0);
+        
+        // Render items in cart-items div (simple mock)
+        const cartHtml = cartItems.map(item => 
+            `<div>${item.name} (x${item.quantity}) - ₹${(item.price * item.quantity)}</div>`
+        ).join('');
+        document.getElementById('cart-items').innerHTML = cartHtml || '<p>Your cart is empty.</p>';
+    }
+
+    function addToCartNow(productId) {
+        const product = productsData[productId];
+        if (product) {
+            const existingItem = cartItems.find(item => item.id === productId);
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cartItems.push({ id: productId, name: product.name, price: product.price, quantity: 1 });
+            }
+            localStorage.setItem('cart', JSON.stringify(cartItems));
+            updateCartDisplay();
+            alert(`${product.name} added to cart!`);
+        }
+    }
+
+    // --- NEW CHECKOUT FUNCTIONS ---
+
+    /**
+     * Called by 'Buy Now' button on a single product card.
+     * Clears cart (for single purchase flow), adds item, and navigates to shipping.
+     */
+    function buyNow(productId) {
+        // For a single "Buy Now" purchase, we often clear the cart first
+        cartItems = [];
+        addToCartNow(productId);
+        goToShipping();
+    }
+
+    /**
+     * Called by 'Proceed to Payment (Buy Now)' button in the Cart section.
+     * Prepares for checkout and displays the Shipping Details section.
+     */
+    function goToShipping() {
+        if (cartItems.length === 0) {
+            alert('Your cart is empty. Please add items to proceed.');
+            return;
+        }
+        
+        // In a real app, you would pre-fill these inputs with logged-in user data
+        // document.getElementById('shipping-name').value = '...';
+        // document.getElementById('shipping-address').value = '...';
+        
+        document.getElementById('shipping-error').style.display = 'none';
+        showSection('shipping-section');
+    }
+
+    /**
+     * Called by 'Continue to Payment' button on the Shipping Details section.
+     * 1. Validates Name, Address, and Phone.
+     * 2. Moves to the Payment Options section if valid.
+     */
+    function confirmShippingDetails() {
+        const name = document.getElementById('shipping-name').value.trim();
+        const phone = document.getElementById('shipping-phone').value.trim();
+        const address = document.getElementById('shipping-address').value.trim();
+        const errorDiv = document.getElementById('shipping-error');
+
+        errorDiv.style.display = 'none';
+
+        if (!name || !phone || !address) {
+            errorDiv.textContent = 'Please fill out all required fields (Name, Phone, Address).';
+            errorDiv.style.display = 'block';
+            return;
+        }
+        
+        // You would typically save this shipping info to the current order object here.
+        console.log("Shipping Info Confirmed:", { name, phone, address });
+        
+        // Render order summary in the payment section
+        renderCheckoutSummary();
+        
+        // Move to the payment section
+        showSection('payment-section');
+    }
+
+    function renderCheckoutSummary() {
+        const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        
+        const summaryHtml = cartItems.map(item => 
+            `<div style="font-size:14px;color:#333;">${item.name} x${item.quantity} </div>`
+        ).join('');
+
+        document.getElementById('checkout-items').innerHTML = summaryHtml;
+        document.getElementById('checkout-total').textContent = total.toFixed(0);
+        
+        // Hide all payment detail blocks by default
+        document.querySelectorAll('.payment-details').forEach(el => el.style.display = 'none');
+    }
+
+    /**
+     * Hides/Shows the relevant details when a payment option is selected.
+     */
+    function selectPayment(method) {
+        selectedPaymentMethod = method;
+        document.querySelectorAll('.payment-details').forEach(el => el.style.display = 'none');
+        
+        const detailDiv = document.getElementById(method + '-details');
+        if (detailDiv) {
+            detailDiv.style.display = 'block';
+        }
+        console.log("Selected Payment:", method);
+    }
+    
+    // --- OTHER REQUIRED MOCK FUNCTIONS (for buttons in your HTML) ---
+
+    // Simple mock for other buttons in your HTML
+    function enlargeLogo(img) { console.log('Logo clicked'); }
+    function toggleAccountDrawer() { 
+        const drawer = document.getElementById('account-drawer');
+        const isHidden = drawer.getAttribute('aria-hidden') === 'true';
+        drawer.setAttribute('aria-hidden', isHidden ? 'false' : 'true');
+    }
+    function searchProducts() { console.log('Searching...'); }
+    function filterCategory(category) { console.log(`Filtering by ${category}`); }
+    function cardClicked(event, id) { console.log(`Card ${id} clicked.`); }
+    function viewProduct(name, price, image, id) { 
+        selectedProduct = { id, name, price, image };
+        document.getElementById('detail-name').textContent = name;
+        document.getElementById('detail-price').textContent = `₹${price}`;
+        showSection('product-details');
+    }
+    function backHome() { showSection('home-section'); }
+    function addToCart() { console.log('Add to cart from details page'); addToCartNow(selectedProduct.id); }
+    function processPayment() { 
+        if (!selectedPaymentMethod) {
+            alert('Please select a payment method first!');
+            return;
+        }
+        console.log(`Processing payment via ${selectedPaymentMethod}`);
+        document.getElementById('payment-confirm').style.display = 'block';
+        alert('Payment processed (mock). Order placed!');
+    }
+    
+    // Account functions mock
+    function googleSignIn() { console.log('Google Sign In clicked'); }
+    function doLogin() { console.log('Local Login clicked'); }
+    function showSignup() { document.getElementById('login-block').style.display = 'none'; document.getElementById('signup-block').style.display = 'block'; }
+    function hideSignup() { document.getElementById('login-block').style.display = 'block'; document.getElementById('signup-block').style.display = 'none'; }
+    function createAccount() { console.log('Create Account clicked'); }
+    function saveProfile() { console.log('Save Profile clicked'); }
+    function logout() { console.log('Logout clicked'); }
+    
+    // Initial setup
+    document.addEventListener('DOMContentLoaded', updateCartDisplay);
+    
+</script>
 
 </body>
 </html>
