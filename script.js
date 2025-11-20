@@ -170,14 +170,43 @@ window.googleSignIn = async function(){
   }
 };
 
-// ---------- Logout from Firebase ----------
+// REPLACE your old logout function with this one
+
 window.logout = async function(){
   try{
-    if(firebaseUser){ await signOut(auth); firebaseUser = null; }
-    // UI and cart will update via onAuthStateChanged
-    toggleAccountDrawer(); // close drawer
-  }catch(e){ console.error(e); }
+    if(firebaseUser){ 
+      await signOut(auth); // Log out from Firebase
+      firebaseUser = null; 
+    }
+    
+    // --- THIS IS THE FIX ---
+    // Always clear the local account from storage,
+    // ensuring both Firebase and Local users are logged out.
+    localStorage.removeItem(LOCAL_ACCOUNT_KEY); 
+    // --- END OF FIX ---
+
+    // Manually update UI to show "Guest"
+    // (This runs for both user types)
+    document.getElementById('account-logged-out').style.display='block';
+    document.getElementById('account-logged-in').style.display='none';
+    document.getElementById('account-name-display').textContent = 'Guest';
+    document.getElementById('account-email-display').textContent = 'Not signed in';
+    document.getElementById('profile-pic-box').innerHTML = '<span id="profile-initials" style="font-weight:800;color:#666">A</span>';
+    updateAccountBubble(null);
+
+    // Close the drawer
+    toggleAccountDrawer(); 
+    
+    // Refresh the cart to show the guest cart (which is loaded by onAuthStateChanged)
+    // or just load the local cart manually
+    cart = loadCartFromLocal();
+    renderCart();
+
+  } catch(e) { 
+    console.error('Logout error:', e); 
+  }
 };
+
 
 // ---------- Save profile (with local pic fix) ----------
 window.saveProfile = async function(){
