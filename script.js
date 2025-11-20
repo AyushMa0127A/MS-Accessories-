@@ -403,22 +403,12 @@ window.viewProduct = function(name, price, image, id){
   document.getElementById('detail-name').textContent = name;
   document.getElementById('detail-image').src = image;
   document.getElementById('detail-price').textContent = 'Price: ₹' + price;
-  document.getElementById('home-section').classList.remove('show');
-  document.getElementById('product-details').classList.add('show');
-  document.getElementById('cart-section').classList.remove('show');
-  document.getElementById('payment-section').classList.remove('show');
-  document.getElementById('search-bar').style.display='none';
-  document.getElementById('category-tabs').style.display='none';
+  window.showSection('product');
   updateProductCardUI(id);
 };
 
 window.backHome = function(){
-  document.getElementById('product-details').classList.remove('show');
-  document.getElementById('home-section').classList.add('show');
-  document.getElementById('cart-section').classList.remove('show');
-  document.getElementById('payment-section').classList.remove('show');
-  document.getElementById('search-bar').style.display='block';
-  document.getElementById('category-tabs').style.display='flex';
+  window.showSection('home');
 };
 
 // add to cart
@@ -431,33 +421,107 @@ window.addToCartNow = function(id){
 };
 window.addToCart = function(){ if(!window.selectedProduct || !window.selectedProduct.id) return; addToCartNow(window.selectedProduct.id); };
 
-// buy now
-window.buyNow = function(id){ addToCartNow(id); proceedToPayment(); };
-
-// proceed to payment
-window.proceedToPayment = function(){
-  document.getElementById('home-section').classList.remove('show');
-  document.getElementById('product-details').classList.remove('show');
-  document.getElementById('cart-section').classList.remove('show');
-  document.getElementById('payment-section').classList.add('show');
-  document.getElementById('search-bar').style.display='none';
-  document.getElementById('category-tabs').style.display='none';
-
-  const checkoutItems = document.getElementById('checkout-items'); checkoutItems.innerHTML=''; let total=0;
-  cart.forEach(it=>{ total += it.price * it.quantity; const div = document.createElement('div'); div.style.display='flex'; div.style.justifyContent='space-between'; div.style.marginBottom='6px'; div.innerHTML = `<div style="font-weight:600">${it.name} × ${it.quantity}</div><div>₹${it.price*it.quantity}</div>`; checkoutItems.appendChild(div); });
-  document.getElementById('checkout-total').textContent = total;
-  selectPayment(null); document.getElementById('payment-confirm').style.display='none';
+// buy now (Starts the new flow: Cart -> Shipping -> Payment)
+window.buyNow = function(id){ 
+  addToCartNow(id); 
+  window.goToShipping(); // Go to the first checkout step
 };
+
+// ==========================================
+// 🚢 NEW CHECKOUT FLOW FUNCTIONS 🚢
+// ==========================================
+
+/**
+ * Step 1: Called from Cart/Buy Now. Shows the shipping details form.
+ */
+window.goToShipping = function() {
+    if (cart.length === 0) {
+        alert('Your cart is empty. Please add items to proceed.');
+        return;
+    }
+
+    // Attempt to pre-fill if logged in (Firebase or Local)
+    const local = loadLocalAccount();
+    if (firebaseUser) {
+        // Pre-fill from Firebase user profile
+        document.getElementById('shipping-name').value = document.getElementById('pf-name').value;
+        document.getElementById('shipping-phone').value = document.getElementById('pf-phone').value;
+        document.getElementById('shipping-address').value = document.getElementById('pf-address').value;
+        // Note: Landmark isn't saved in your user profile, so it remains empty.
+    } else if (local) {
+        // Pre-fill from Local user profile
+        document.getElementById('shipping-name').value = local.name;
+        document.getElementById('shipping-phone').value = local.phone;
+        document.getElementById('shipping-address').value = local.address;
+    }
+
+    document.getElementById('shipping-error').style.display = 'none';
+    window.showSection('shipping');
+};
+
+/**
+ * Step 2: Called from Shipping Details 'Continue to Payment' button.
+ * Validates details and moves to payment.
+ */
+window.confirmShippingDetails = function() {
+    const name = document.getElementById('shipping-name').value.trim();
+    const phone = document.getElementById('shipping-phone').value.trim();
+    const address = document.getElementById('shipping-address').value.trim();
+    // const landmark = document.getElementById('shipping-landmark').value.trim(); // Optional landmark
+    const errorDiv = document.getElementById('shipping-error');
+
+    errorDiv.style.display = 'none';
+
+    if (!name || !phone || !address) {
+        errorDiv.textContent = 'Please fill out all required fields (Name, Phone, Address).';
+        errorDiv.style.display = 'block';
+        return;
+    }
+    
+    // Proceed to payment setup (Step 3)
+    window.proceedToPaymentSetup();
+};
+
+
+/**
+ * Step 3: Sets up the payment section UI and shows it.
+ */
+window.proceedToPaymentSetup = function(){
+  window.showSection('payment');
+  
+  // Render the order summary in the payment section
+  const checkoutItems = document.getElementById('checkout-items'); checkoutItems.innerHTML=''; let total=0;
+  cart.forEach(it=>{ 
+    total += it.price * it.quantity; 
+    const div = document.createElement('div'); 
+    div.style.display='flex'; 
+    div.style.justifyContent='space-between'; 
+    div.style.marginBottom='6px'; 
+    div.innerHTML = `<div style="font-weight:600">${it.name} × ${it.quantity}</div><div>₹${it.price*it.quantity}</div>`; 
+    checkoutItems.appendChild(div); 
+  });
+  
+  document.getElementById('checkout-total').textContent = total;
+  // Deselect payment options and hide confirmation banner
+  selectPayment(null); 
+  document.getElementById('payment-confirm').style.display='none';
+};
+
+// ==========================================
+// 🔚 END OF NEW FUNCTIONS 🔚
+// ==========================================
+
 
 // update product card UI
 function updateProductCardUI(id){
   const actions = document.getElementById('actions-'+id);
   const existing = findCartItem(id);
   if(!actions) return;
+  // NOTE: Buy Now button is still in the HTML for non-cart items, so we render it here.
   if(existing && existing.quantity>0){
     actions.innerHTML = `<div class="qty-box" id="qtybox-${id}" onclick="event.stopPropagation()"><button onclick="decreaseFromCard(event,'${id}')">−</button><div class="qty-number" id="qtynum-${id}">${existing.quantity}</div><button onclick="increaseFromCard(event,'${id}')">+</button></div>`;
   } else {
-    actions.innerHTML = `<button class="btn btn-add" onclick="event.stopPropagation(); addToCartNow('${id}')">Add to Cart</button><button class="btn buy btn-buy" onclick="event.stopPropagation(); buyNow('${id}')">Buy Now</button>`;
+    actions.innerHTML = `<button class="btn btn-add" onclick="event.stopPropagation(); addToCartNow('${id}')">Add to Cart</button>`; // Removed the 'Buy Now' button from cards
   }
 }
 window.increaseFromCard = function(e,id){ e.stopPropagation(); changeQtyFromCard(id,1); }
@@ -511,18 +575,41 @@ window.processPayment = function(){
   if(selectedPaymentMethod==='card'){ const cnum=document.getElementById('card-number').value.trim(), cname=document.getElementById('card-name').value.trim(), cexp=document.getElementById('card-exp').value.trim(), cvv=document.getElementById('card-cvv').value.trim(); if(!cnum||!cname||!cexp||!cvv){ alert('Fill card details'); return; } }
   if(selectedPaymentMethod==='netbank'){ const bank=document.getElementById('bank-select').value; if(!bank){ alert('Select bank'); return; } }
   const payBtn = document.querySelector('#payment-section .btn.buy'); payBtn.disabled=true; payBtn.textContent='Processing...';
-  setTimeout(()=>{ document.getElementById('payment-confirm').style.display='block'; payBtn.disabled=false; payBtn.textContent='Proceed to Pay'; cart=[]; saveCart(); renderCart(); setTimeout(()=>{ showSection('home'); document.getElementById('payment-confirm').style.display='none'; },1300); },900);
+  setTimeout(()=>{ document.getElementById('payment-confirm').style.display='block'; payBtn.disabled=false; payBtn.textContent='Proceed to Pay'; cart=[]; saveCart(); renderCart(); setTimeout(()=>{ window.showSection('home'); document.getElementById('payment-confirm').style.display='none'; },1300); },900);
 };
 
 // show section helper
 window.showSection = function(section){
-  document.getElementById('home-section').classList.toggle('show', section==='home');
-  document.getElementById('product-details').classList.toggle('show', section==='product');
-  document.getElementById('cart-section').classList.toggle('show', section==='cart');
-  document.getElementById('payment-section').classList.toggle('show', section==='payment');
-  if(section==='home'){ document.getElementById('search-bar').style.display='block'; document.getElementById('category-tabs').style.display='flex'; } else { document.getElementById('search-bar').style.display='none'; document.getElementById('category-tabs').style.display='none'; }
-  if(section==='cart') renderCart();
-  if(section==='payment') proceedToPayment();
+  // Map section name to its ID
+  const sections = {
+    home: 'home-section',
+    product: 'product-details',
+    cart: 'cart-section',
+    shipping: 'shipping-section', // New section added here
+    payment: 'payment-section'
+  };
+
+  // Ensure all sections are hidden first
+  Object.values(sections).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('show');
+  });
+
+  // Show the target section
+  const targetId = sections[section];
+  if (targetId) {
+    const targetEl = document.getElementById(targetId);
+    if (targetEl) targetEl.classList.add('show');
+  }
+
+  // Toggle search bar and category tabs based on section
+  const isHome = section === 'home';
+  document.getElementById('search-bar').style.display = isHome ? 'block' : 'none';
+  document.getElementById('category-tabs').style.display = isHome ? 'flex' : 'none';
+  
+  // Specific actions for new sections
+  if(section === 'cart') renderCart();
+  // Note: 'payment' section is now handled by proceedToPaymentSetup, not directly by showSection
 };
 
 // init UI
