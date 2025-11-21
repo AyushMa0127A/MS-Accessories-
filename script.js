@@ -15,7 +15,8 @@ const firebaseConfig = {
 };
 
 // ---------- UPI Payment Constants (REPLACE WITH YOUR FAMPAY INFO) ----------
-const OWNER_UPI_ID = "msaccessories@fampay"; // <-- REPLACE WITH YOUR FAMPAY UPI ID
+// ⚠️ REPLACE WITH YOUR ACTUAL FAMPAY UPI ID ⚠️
+const OWNER_UPI_ID = "msaccessories@fampay"; 
 const OWNER_NAME = "MS Accessories";
 const QR_API_URL = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=";
 // --------------------------------------------------------------------------
@@ -32,7 +33,18 @@ let firebaseUser = null; // if signed in with Google, this holds auth user objec
 
 // ---------- Cart Utilities ----------
 function saveCartToLocal(cart){ localStorage.setItem('msacc_cart_v1', JSON.stringify(cart)); }
-function loadCartFromLocal(){ try{ return JSON.parse(localStorage.getItem('msacc_cart_v1')) || []; }catch(e){return []}}
+/**
+ * Fix: Initialize cart as empty array if local storage item is null or corrupt.
+ */
+function loadCartFromLocal(){ 
+    try{ 
+        const cartData = localStorage.getItem('msacc_cart_v1');
+        return cartData ? JSON.parse(cartData) : []; 
+    }catch(e){
+        console.error("Error loading cart from local storage, resetting:", e);
+        return []; // Return empty cart on error
+    }
+}
 
 /**
  * Merges two carts (e.g., a local one and a cloud one), combining quantities
@@ -176,8 +188,6 @@ window.googleSignIn = async function(){
     alert('Google sign-in failed: ' + (err.message || err));
   }
 };
-
-// REPLACE your old logout function with this one
 
 window.logout = async function(){
   try{
@@ -372,11 +382,12 @@ window.toggleAccountDrawer = function(){
 };
 
 // ---------- CART & SHOP logic ----------
+// ⚠️ UPDATED: Added an array of 'images' for the gallery view ⚠️
 const PRODUCTS = {
-  p1:{id:'p1',name:'Gold Necklace',price:1200,image:'dummy.jpg',category:'Necklace'},
-  p2:{id:'p2',name:'Silver Earrings',price:499,image:'dummy.jpg',category:'Earrings'},
-  p3:{id:'p3',name:'Leather Bracelet',price:799,image:'dummy.jpg',category:'Bracelets'},
-  p4:{id:'p4',name:'Combo Box Special',price:1999,image:'dummy.jpg',category:'Combo Boxes'}
+  p1:{id:'p1',name:'Gold Necklace',price:1200,image:'dummy.jpg',images:['dummy.jpg','dummy.jpg','dummy.jpg'],category:'Necklace'},
+  p2:{id:'p2',name:'Silver Earrings',price:499,image:'dummy.jpg',images:['dummy.jpg','dummy.jpg','dummy.jpg'],category:'Earrings'},
+  p3:{id:'p3',name:'Leather Bracelet',price:799,image:'dummy.jpg',images:['dummy.jpg','dummy.jpg','dummy.jpg'],category:'Bracelets'},
+  p4:{id:'p4',name:'Combo Box Special',price:1999,image:'dummy.jpg',images:['dummy.jpg','dummy.jpg','dummy.jpg'],category:'Combo Boxes'}
 };
 
 let cart = loadCartFromLocal(); // persisted in localStorage or cloud (set by onAuthStateChanged)
@@ -402,14 +413,24 @@ function findCartItem(id){ return cart.find(it=>it.id===id); }
 function updateCartCount(){ const totalQty = cart.reduce((s,it)=>s+it.quantity,0); document.getElementById('cart-count').textContent = totalQty; saveCart(); }
 
 // product card click
-window.cardClicked = function(event,id){ viewProduct(PRODUCTS[id].name, PRODUCTS[id].price, PRODUCTS[id].image, id); }
+window.cardClicked = function(event,id){ viewProduct(PRODUCTS[id].name, PRODUCTS[id].price, PRODUCTS[id].images, id); } // Passing images array
 
 // view product
-window.viewProduct = function(name, price, image, id){
-  window.selectedProduct = { id, name, price, image };
+window.viewProduct = function(name, price, images, id){
+  window.selectedProduct = { id, name, price, images }; // Use images array
   document.getElementById('detail-name').textContent = name;
-  document.getElementById('detail-image').src = image;
   document.getElementById('detail-price').textContent = 'Price: ₹' + price;
+  
+  // ⚠️ NEW: Build the image gallery ⚠️
+  const galleryContainer = document.getElementById('detail-image-gallery');
+  galleryContainer.innerHTML = ''; // Clear previous images
+  images.forEach(imageSrc => {
+      const img = document.createElement('img');
+      img.src = imageSrc;
+      img.alt = name + " View";
+      galleryContainer.appendChild(img);
+  });
+  
   window.showSection('product');
   updateProductCardUI(id);
 };
@@ -422,8 +443,11 @@ window.backHome = function(){
 window.addToCartNow = function(id){
   const prod = PRODUCTS[id];
   const existing = findCartItem(id);
+  // Important: Cart items only need ID, name, price, and ONE image (for cart view)
+  const cartItemImage = prod.images[0] || prod.image; 
+  
   if(existing) existing.quantity += 1;
-  else cart.push({ id: prod.id, name: prod.name, price: prod.price, image: prod.image, quantity: 1 });
+  else cart.push({ id: prod.id, name: prod.name, price: prod.price, image: cartItemImage, quantity: 1 });
   updateCartCount(); updateProductCardUI(id); renderCart(); // saveCart() is called by updateCartCount()
 };
 window.addToCart = function(){ if(!window.selectedProduct || !window.selectedProduct.id) return; addToCartNow(window.selectedProduct.id); };
@@ -435,7 +459,7 @@ window.buyNow = function(id){
 };
 
 // ==========================================
-// 🚢 NEW CHECKOUT FLOW FUNCTIONS 🚢
+// 🚢 CHECKOUT FLOW FUNCTIONS 🚢
 // ==========================================
 
 /**
@@ -519,7 +543,7 @@ window.proceedToPaymentSetup = function(){
   const upiLink = `upi://pay?pa=${OWNER_UPI_ID}&pn=${OWNER_NAME}&am=${orderTotal}.00&cu=INR&tn=${transactionNote}`;
   
   // UPI QR Code Data (same data, but raw string for QR generator)
-  const upiQrData = upiLink.replace("upi://pay?", "upi://pay?"); // Simply using the link as the QR data is standard
+  const upiQrData = upiLink; 
 
   // Store them globally or attach to an element for use in selectPayment
   document.getElementById('upi-details').setAttribute('data-upi-link', upiLink);
@@ -529,14 +553,10 @@ window.proceedToPaymentSetup = function(){
   // --- END NEW UPI GENERATION ---
 
 
-  // Deselect payment options and hide confirmation banner
-  selectPayment(null); 
+  // Ensure UPI is selected and display the details immediately
+  window.selectPayment('upi');
   document.getElementById('payment-confirm').style.display='none';
 };
-
-// ==========================================
-// 🔚 END OF NEW FUNCTIONS 🔚
-// ==========================================
 
 
 // update product card UI
@@ -586,48 +606,32 @@ window.filterCategory = function(cat){ document.querySelectorAll('.product-card'
 let selectedPaymentMethod = null;
 window.selectPayment = function(method){
   selectedPaymentMethod = method;
-  // Hide all payment details first
-  document.getElementById('upi-details').style.display='none';
-  document.getElementById('card-details').style.display='none';
-  document.getElementById('netbank-details').style.display='none';
 
-  if(!method){ 
-    document.querySelectorAll('input[name="payment"]').forEach(r=>r.checked=false); 
-    return; 
-  }
-  document.querySelectorAll('input[name="payment"]').forEach(r=> r.checked = (r.value===method));
+  // Since we only have UPI/Scan left, we ensure it's selected and displayed.
+  document.querySelectorAll('input[name="payment"]').forEach(r=> r.checked = (r.value==='upi'));
 
-  if(method==='upi' || method==='scan'){
-    const upiDetailsEl = document.getElementById('upi-details');
-    upiDetailsEl.style.display='block';
-    
-    // Get the previously generated QR link data
-    const upiQrData = upiDetailsEl.getAttribute('data-upi-qr');
-    const upiLink = upiDetailsEl.getAttribute('data-upi-link');
-    
-    // Generate the QR Code image URL
-    const qrImageUrl = QR_API_URL + encodeURIComponent(upiQrData);
-    
-    // Find the placeholder and update it
-    const qrPlaceholder = upiDetailsEl.querySelector('.qr-placeholder');
-    if (qrPlaceholder) {
-        qrPlaceholder.innerHTML = `<img src="${qrImageUrl}" alt="UPI QR Code" style="width:100%; height:100%; object-fit:contain;">`;
-    }
-    
-    // Add a button/link for mobile deep linking
-    const deepLinkBox = upiDetailsEl.querySelector('.deep-link-box');
-    if (deepLinkBox) {
-        deepLinkBox.innerHTML = `
-            <a href="${upiLink}" class="btn buy" style="text-decoration:none; margin-top:10px; display:block; text-align:center;">Pay with UPI App</a>
-        `;
-    }
+  const upiDetailsEl = document.getElementById('upi-details');
+  upiDetailsEl.style.display='block';
+  
+  // Get the previously generated QR link data
+  const upiQrData = upiDetailsEl.getAttribute('data-upi-qr');
+  const upiLink = upiDetailsEl.getAttribute('data-upi-link');
+  
+  // Generate the QR Code image URL
+  const qrImageUrl = QR_API_URL + encodeURIComponent(upiQrData);
+  
+  // Update QR Code
+  const qrPlaceholder = upiDetailsEl.querySelector('.qr-placeholder');
+  if (qrPlaceholder) {
+      qrPlaceholder.innerHTML = `<img src="${qrImageUrl}" alt="UPI QR Code" style="width:100%; height:100%; object-fit:contain;">`;
   }
   
-  // NOTE: Card and Net Banking are left as disabled placeholders
-  if(method==='card' || method==='netbank'){
-    alert(`This method is a placeholder and not active. Please use UPI Scan/ID.`);
-    // Force switch back to UPI details display for manual payment
-    document.getElementById('upi-details').style.display='block';
+  // Update Deep Link Button
+  const deepLinkBox = upiDetailsEl.querySelector('.deep-link-box');
+  if (deepLinkBox) {
+      deepLinkBox.innerHTML = `
+          <a href="${upiLink}" class="btn buy" style="text-decoration:none; margin-top:10px; display:block; text-align:center;">Pay with UPI App</a>
+      `;
   }
 };
 
@@ -635,49 +639,42 @@ window.selectPayment = function(method){
 // ⚠️ MODIFIED PROCESS PAYMENT FOR MANUAL UPI VERIFICATION ⚠️
 window.processPayment = function(){
   if(cart.length===0){ alert('Cart empty'); return; }
-  if(!selectedPaymentMethod){ alert('Select payment method'); return; }
+  
+  // Automatically set selectedPaymentMethod to 'upi' since it's the only option
+  selectedPaymentMethod = 'upi';
   
   const payBtn = document.querySelector('#payment-section .btn.buy');
   payBtn.disabled=true;
   
-  if(selectedPaymentMethod==='upi' || selectedPaymentMethod==='scan'){ 
-    
-    const total = document.getElementById('checkout-total').textContent;
-    
-    // Alert the user that payment is manual
-    alert(`
-        🚨 UPI Order Confirmation 🚨
-        
-        1. Please manually confirm payment of ₹${total} 
-           to UPI ID: ${OWNER_UPI_ID}.
-        2. Once done, click OK to mark the order as placed.
-        
-        The order will be processed after the shop owner manually verifies the payment in their FamPay account.
-    `);
-    
-    // Simulate order placement
-    payBtn.textContent='Order Placed (Awaiting Verification)...';
-    
-    document.getElementById('payment-confirm').style.display='block'; 
-    
-    // Clear cart after 'successful' manual placement
-    cart=[]; 
-    saveCart(); 
-    renderCart(); 
-    
-    setTimeout(()=>{ 
-      window.showSection('home'); 
-      document.getElementById('payment-confirm').style.display='none'; 
-      payBtn.textContent='Proceed to Pay';
-      payBtn.disabled=false;
-    }, 2000);
-    
-  } else {
-    // Other methods are disabled
-    alert(`The selected payment method is not active. Please select UPI Scan/ID.`);
-    payBtn.disabled=false;
+  // UPI/Scan Flow: Alert the user that payment is manual
+  const total = document.getElementById('checkout-total').textContent;
+  
+  alert(`
+      🚨 UPI Order Confirmation 🚨
+      
+      1. Please manually confirm payment of ₹${total} 
+         to UPI ID: ${OWNER_UPI_ID}.
+      2. Once done, click OK to mark the order as placed.
+      
+      The order will be processed after the shop owner manually verifies the payment in their FamPay account.
+  `);
+  
+  // Simulate order placement
+  payBtn.textContent='Order Placed (Awaiting Verification)...';
+  
+  document.getElementById('payment-confirm').style.display='block'; 
+  
+  // Clear cart after 'successful' manual placement
+  cart=[]; 
+  saveCart(); 
+  renderCart(); 
+  
+  setTimeout(()=>{ 
+    window.showSection('home'); 
+    document.getElementById('payment-confirm').style.display='none'; 
     payBtn.textContent='Proceed to Pay';
-  }
+    payBtn.disabled=false;
+  }, 2000);
 };
 // -------------------------------------------------------------
 
@@ -689,7 +686,7 @@ window.showSection = function(section){
     home: 'home-section',
     product: 'product-details',
     cart: 'cart-section',
-    shipping: 'shipping-section', // New section added here
+    shipping: 'shipping-section', 
     payment: 'payment-section'
   };
 
@@ -713,13 +710,10 @@ window.showSection = function(section){
   
   // Specific actions for new sections
   if(section === 'cart') renderCart();
-  // Note: 'payment' section is now handled by proceedToPaymentSetup, not directly by showSection
 };
 
 // init UI
 window.initUI = function(){ 
-  // cart is loaded by onAuthStateChanged, which runs on page load
-  // so we just need to render
   renderCart(); 
   refreshAccountUI(); 
 };
@@ -727,4 +721,3 @@ window.addEventListener('DOMContentLoaded', initUI);
 
 // small helper to toggle drawer (already exposed)
 window.enlargeLogo = function(img){ img.style.transform = img.style.transform === 'scale(1.4)' ? 'scale(1)' : 'scale(1.4)'; };
- 
