@@ -14,6 +14,13 @@ const firebaseConfig = {
   measurementId: "G-54NJNW0FLR"
 };
 
+// ---------- UPI Payment Constants (REPLACE WITH YOUR FAMPAY INFO) ----------
+const OWNER_UPI_ID = "msaccessories@fampay"; // <-- REPLACE WITH YOUR FAMPAY UPI ID
+const OWNER_NAME = "MS Accessories";
+const QR_API_URL = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=";
+// --------------------------------------------------------------------------
+
+
 // ---------- Init Firebase ----------
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -484,13 +491,14 @@ window.confirmShippingDetails = function() {
 
 
 /**
- * Step 3: Sets up the payment section UI and shows it.
+ * Step 3: Sets up the payment section UI, generates UPI QR data, and shows it.
  */
 window.proceedToPaymentSetup = function(){
   window.showSection('payment');
   
   // Render the order summary in the payment section
-  const checkoutItems = document.getElementById('checkout-items'); checkoutItems.innerHTML=''; let total=0;
+  const checkoutItems = document.getElementById('checkout-items'); checkoutItems.innerHTML=''; 
+  let total=0;
   cart.forEach(it=>{ 
     total += it.price * it.quantity; 
     const div = document.createElement('div'); 
@@ -502,6 +510,25 @@ window.proceedToPaymentSetup = function(){
   });
   
   document.getElementById('checkout-total').textContent = total;
+
+  // --- NEW UPI QR/LINK GENERATION ---
+  const orderTotal = total;
+  const transactionNote = `MSAcc-Order-${Date.now()}`; // Unique reference
+
+  // UPI Payment Deep Link (for mobile users/buttons)
+  const upiLink = `upi://pay?pa=${OWNER_UPI_ID}&pn=${OWNER_NAME}&am=${orderTotal}.00&cu=INR&tn=${transactionNote}`;
+  
+  // UPI QR Code Data (same data, but raw string for QR generator)
+  const upiQrData = upiLink.replace("upi://pay?", "upi://pay?"); // Simply using the link as the QR data is standard
+
+  // Store them globally or attach to an element for use in selectPayment
+  document.getElementById('upi-details').setAttribute('data-upi-link', upiLink);
+  document.getElementById('upi-details').setAttribute('data-upi-qr', upiQrData);
+  // Also prefill UPI ID field with the VPA
+  document.getElementById('upi-id').value = OWNER_UPI_ID;
+  // --- END NEW UPI GENERATION ---
+
+
   // Deselect payment options and hide confirmation banner
   selectPayment(null); 
   document.getElementById('payment-confirm').style.display='none';
@@ -559,24 +586,101 @@ window.filterCategory = function(cat){ document.querySelectorAll('.product-card'
 let selectedPaymentMethod = null;
 window.selectPayment = function(method){
   selectedPaymentMethod = method;
+  // Hide all payment details first
   document.getElementById('upi-details').style.display='none';
   document.getElementById('card-details').style.display='none';
   document.getElementById('netbank-details').style.display='none';
-  if(!method){ document.querySelectorAll('input[name="payment"]').forEach(r=>r.checked=false); return; }
+
+  if(!method){ 
+    document.querySelectorAll('input[name="payment"]').forEach(r=>r.checked=false); 
+    return; 
+  }
   document.querySelectorAll('input[name="payment"]').forEach(r=> r.checked = (r.value===method));
-  if(method==='upi') document.getElementById('upi-details').style.display='block';
-  if(method==='card') document.getElementById('card-details').style.display='block';
-  if(method==='netbank') document.getElementById('netbank-details').style.display='block';
+
+  if(method==='upi' || method==='scan'){
+    const upiDetailsEl = document.getElementById('upi-details');
+    upiDetailsEl.style.display='block';
+    
+    // Get the previously generated QR link data
+    const upiQrData = upiDetailsEl.getAttribute('data-upi-qr');
+    const upiLink = upiDetailsEl.getAttribute('data-upi-link');
+    
+    // Generate the QR Code image URL
+    const qrImageUrl = QR_API_URL + encodeURIComponent(upiQrData);
+    
+    // Find the placeholder and update it
+    const qrPlaceholder = upiDetailsEl.querySelector('.qr-placeholder');
+    if (qrPlaceholder) {
+        qrPlaceholder.innerHTML = `<img src="${qrImageUrl}" alt="UPI QR Code" style="width:100%; height:100%; object-fit:contain;">`;
+    }
+    
+    // Add a button/link for mobile deep linking
+    const deepLinkBox = upiDetailsEl.querySelector('.deep-link-box');
+    if (deepLinkBox) {
+        deepLinkBox.innerHTML = `
+            <a href="${upiLink}" class="btn buy" style="text-decoration:none; margin-top:10px; display:block; text-align:center;">Pay with UPI App</a>
+        `;
+    }
+  }
+  
+  // NOTE: Card and Net Banking are left as disabled placeholders
+  if(method==='card' || method==='netbank'){
+    alert(`This method is a placeholder and not active. Please use UPI Scan/ID.`);
+    // Force switch back to UPI details display for manual payment
+    document.getElementById('upi-details').style.display='block';
+  }
 };
+
+
+// ⚠️ MODIFIED PROCESS PAYMENT FOR MANUAL UPI VERIFICATION ⚠️
 window.processPayment = function(){
   if(cart.length===0){ alert('Cart empty'); return; }
   if(!selectedPaymentMethod){ alert('Select payment method'); return; }
-  if(selectedPaymentMethod==='upi'){ const upi = document.getElementById('upi-id').value.trim(); if(!upi){ alert('Enter UPI ID'); return; } }
-  if(selectedPaymentMethod==='card'){ const cnum=document.getElementById('card-number').value.trim(), cname=document.getElementById('card-name').value.trim(), cexp=document.getElementById('card-exp').value.trim(), cvv=document.getElementById('card-cvv').value.trim(); if(!cnum||!cname||!cexp||!cvv){ alert('Fill card details'); return; } }
-  if(selectedPaymentMethod==='netbank'){ const bank=document.getElementById('bank-select').value; if(!bank){ alert('Select bank'); return; } }
-  const payBtn = document.querySelector('#payment-section .btn.buy'); payBtn.disabled=true; payBtn.textContent='Processing...';
-  setTimeout(()=>{ document.getElementById('payment-confirm').style.display='block'; payBtn.disabled=false; payBtn.textContent='Proceed to Pay'; cart=[]; saveCart(); renderCart(); setTimeout(()=>{ window.showSection('home'); document.getElementById('payment-confirm').style.display='none'; },1300); },900);
+  
+  const payBtn = document.querySelector('#payment-section .btn.buy');
+  payBtn.disabled=true;
+  
+  if(selectedPaymentMethod==='upi' || selectedPaymentMethod==='scan'){ 
+    
+    const total = document.getElementById('checkout-total').textContent;
+    
+    // Alert the user that payment is manual
+    alert(`
+        🚨 UPI Order Confirmation 🚨
+        
+        1. Please manually confirm payment of ₹${total} 
+           to UPI ID: ${OWNER_UPI_ID}.
+        2. Once done, click OK to mark the order as placed.
+        
+        The order will be processed after the shop owner manually verifies the payment in their FamPay account.
+    `);
+    
+    // Simulate order placement
+    payBtn.textContent='Order Placed (Awaiting Verification)...';
+    
+    document.getElementById('payment-confirm').style.display='block'; 
+    
+    // Clear cart after 'successful' manual placement
+    cart=[]; 
+    saveCart(); 
+    renderCart(); 
+    
+    setTimeout(()=>{ 
+      window.showSection('home'); 
+      document.getElementById('payment-confirm').style.display='none'; 
+      payBtn.textContent='Proceed to Pay';
+      payBtn.disabled=false;
+    }, 2000);
+    
+  } else {
+    // Other methods are disabled
+    alert(`The selected payment method is not active. Please select UPI Scan/ID.`);
+    payBtn.disabled=false;
+    payBtn.textContent='Proceed to Pay';
+  }
 };
+// -------------------------------------------------------------
+
 
 // show section helper
 window.showSection = function(section){
@@ -623,3 +727,4 @@ window.addEventListener('DOMContentLoaded', initUI);
 
 // small helper to toggle drawer (already exposed)
 window.enlargeLogo = function(img){ img.style.transform = img.style.transform === 'scale(1.4)' ? 'scale(1)' : 'scale(1.4)'; };
+ 
