@@ -4,329 +4,1081 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MS Accessories</title>
-    <!-- Use your provided CSS file -->
-    <link rel="stylesheet" href="style.css"> 
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Lucide Icons -->
+    <script type="module">
+        import lucide from 'https://cdn.jsdelivr.net/npm/lucide@latest/dist/esm/lucide.js';
+        window.lucide = lucide;
+    </script>
+    <!-- Use Inter font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    
     <style>
-        /* Specific CSS for the new image carousel */
+        :root {
+            /* Custom variables for the theme */
+            --primary: #4f46e5; /* Indigo-600 */
+            --accent: #ef4444; /* Red-500 */
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* Slate-50 */
+        }
+        /* Specific CSS for the image carousel, essential for scroll-snap and touch scrolling */
         .gallery-container {
-            overflow-x: scroll; /* Allows horizontal scrolling */
-            display: flex; /* Key change: makes children flow horizontally */
-            -webkit-overflow-scrolling: touch; /* Improves scrolling on iOS */
-            padding-bottom: 0px; /* Removed padding for cleaner look */
-            margin-bottom: 15px;
-            border-radius: 10px;
-            background: #f7f7f7;
-            box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
-            
-            /* 💡 NEW: SCROLL-SNAP PROPERTIES for the swipe effect 💡 */
-            scroll-snap-type: x mandatory; /* Snap to elements horizontally */
-            
-            width: 100%; /* Take full width of its parent */
-            max-width: 350px; /* Limit width on large screens */
+            overflow-x: scroll;
+            display: flex;
+            -webkit-overflow-scrolling: touch;
+            scroll-snap-type: x mandatory;
+            padding-bottom: 0px; 
         }
         /* Hide scrollbar for a cleaner mobile look */
         .gallery-container::-webkit-scrollbar {
             height: 0; 
         }
-        .gallery-container::-webkit-scrollbar-thumb {
-            background: transparent;
-        }
         .gallery-container img {
-            /* 💡 NEW: Image sizing and snapping 💡 */
-            flex-shrink: 0; /* Important: prevents images from shrinking */
-            width: 100%; /* Each image takes 100% of the container width */
-            max-width: 350px; /* Keep the max-width consistent */
-            height: 300px; /* Fixed height for consistent look */
-            object-fit: contain; /* Ensures the dummy image fits */
-            scroll-snap-align: start; /* Snap to the start of the image */
-            background: #fff;
-            border-radius: 8px;
-            margin-right: 0; /* No margin between images as they are full width */
+            flex-shrink: 0;
+            scroll-snap-align: start;
+            /* Tailwind classes applied in JS/HTML but CSS properties for flex-shrink/snap are crucial */
         }
-        
-        /* Ensure responsive layout for product details */
-        #product-details > div {
-            display: flex;
-            flex-direction: column; /* Stack on mobile */
-            gap: 20px;
+        /* Style for Payment Radio buttons */
+        .payment-card {
+            cursor: pointer;
+            @apply flex items-center border border-gray-200 p-4 rounded-xl transition-all duration-200;
         }
-        @media (min-width: 600px) {
-            #product-details > div {
-                flex-direction: row; /* Side-by-side on desktop */
-                align-items: flex-start;
-            }
+        .payment-card:has(input:checked) {
+            @apply border-indigo-500 bg-indigo-50 shadow-md;
         }
+        .section-card {
+            /* Ensures smooth transition when showing/hiding sections */
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+            transform: translateX(100%);
+            opacity: 0;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+        }
+        .section-card.show {
+            transform: translateX(0);
+            opacity: 1;
+            position: relative; /* Only the visible section is in document flow */
+        }
+        .account-bubble-icon {
+            /* Icon styling moved to Tailwind classes in HTML */
+        }
+
     </style>
 </head>
-<body>
+<body class="min-h-screen">
 
-    <header>
-        <div class="header-left">
-            <img src="dummy.jpg" alt="Logo" class="logo" onclick="enlargeLogo(this)">
-            <h1 class="site-title" onclick="showSection('home')">MS Accessories</h1>
+    <!-- Header -->
+    <header class="flex justify-between items-center p-4 bg-white shadow-md sticky top-0 z-20">
+        <div class="flex items-center gap-3">
+            <!-- Logo replaced with a placeholder icon -->
+            <button onclick="enlargeLogo(this)" class="text-indigo-600">
+                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-gem"><path d="M6 3v18l6 3 6-3V3z"/><path d="M12 3v18"/></svg>
+            </button>
+            <h1 class="text-xl font-bold text-gray-800 cursor-pointer" onclick="backHome()">MS Accessories</h1>
         </div>
-        <div class="header-right">
-            <div style="position:relative;">
-                <button class="icon-btn" onclick="showSection('cart')">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 12.42a2 2 0 0 0 2 1.58h9.38a2 2 0 0 0 2-1.58L23 6H6"/></svg>
+        <div class="flex items-center gap-4">
+            <!-- Cart Button -->
+            <div class="relative">
+                <button class="p-2 rounded-full hover:bg-gray-100 transition" onclick="showSection('cart')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shopping-cart"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 12.42a2 2 0 0 0 2 1.58h9.38a2 2 0 0 0 2-1.58L23 6H6"/></svg>
                 </button>
-                <span id="cart-count" style="position:absolute;top:-4px;right:-4px;background:var(--accent);color:#fff;border-radius:50%;padding:2px 6px;font-size:11px;">0</span>
+                <span id="cart-count" class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full px-2 py-0.5 text-xs font-bold shadow-md">0</span>
             </div>
-            <button class="icon-btn" onclick="toggleAccountDrawer()">
-                <div id="account-bubble" class="account-bubble">A</div>
+            <!-- Account Button -->
+            <button class="p-1 rounded-full transition" onclick="toggleAccountDrawer()">
+                <div id="account-bubble" class="account-bubble-icon w-8 h-8 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-700 font-bold border-2 border-indigo-500 text-sm">A</div>
             </button>
         </div>
     </header>
 
-    <main>
+    <main class="p-4 max-w-4xl mx-auto">
+        
         <!-- Search and Categories (Home) -->
-        <input type="text" id="search-bar" placeholder="Search products..." onkeyup="searchProducts()">
-        <div id="category-tabs">
-            <button onclick="filterCategory('All')">All</button>
-            <button onclick="filterCategory('Necklace')">Necklaces</button>
-            <button onclick="filterCategory('Earrings')">Earrings</button>
-            <button onclick="filterCategory('Bracelets')">Bracelets</button>
-            <button onclick="filterCategory('Combo Boxes')">Combos</button>
+        <input type="text" id="search-bar" placeholder="Search products..." onkeyup="searchProducts()" 
+               class="w-full p-3 mb-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition shadow-sm">
+        
+        <div id="category-tabs" class="flex flex-wrap gap-2 mb-6">
+            <button class="px-4 py-2 text-sm font-medium rounded-full transition duration-150 bg-indigo-500 text-white" data-category="All" onclick="filterCategory('All')">All</button>
+            <button class="px-4 py-2 text-sm font-medium rounded-full transition duration-150 bg-gray-200 text-gray-700 hover:bg-indigo-100 hover:text-indigo-600" data-category="Necklace" onclick="filterCategory('Necklace')">Necklaces</button>
+            <button class="px-4 py-2 text-sm font-medium rounded-full transition duration-150 bg-gray-200 text-gray-700 hover:bg-indigo-100 hover:text-indigo-600" data-category="Earrings" onclick="filterCategory('Earrings')">Earrings</button>
+            <button class="px-4 py-2 text-sm font-medium rounded-full transition duration-150 bg-gray-200 text-gray-700 hover:bg-indigo-100 hover:text-indigo-600" data-category="Bracelets" onclick="filterCategory('Bracelets')">Bracelets</button>
+            <button class="px-4 py-2 text-sm font-medium rounded-full transition duration-150 bg-gray-200 text-gray-700 hover:bg-indigo-100 hover:text-indigo-600" data-category="Combo Boxes" onclick="filterCategory('Combo Boxes')">Combos</button>
         </div>
 
         <!-- 1. Home Section (Product Grid) -->
-        <section id="home-section" class="section-card show">
-            <div id="products">
-                <div class="product-card" id="p1" onclick="cardClicked(event,'p1')" data-name="Gold Necklace" data-category="Necklace">
-                    <img src="dummy.jpg" alt="Gold Necklace">
-                    <h3>Gold Necklace</h3>
-                    <p class="price">₹1200</p>
-                    <div class="card-actions" id="actions-p1">
-                        <button class="btn btn-add" onclick="event.stopPropagation(); addToCartNow('p1')">Add to Cart</button>
-                    </div>
-                </div>
-                <div class="product-card" id="p2" onclick="cardClicked(event,'p2')" data-name="Silver Earrings" data-category="Earrings">
-                    <img src="dummy.jpg" alt="Silver Earrings">
-                    <h3>Silver Earrings</h3>
-                    <p class="price">₹499</p>
-                    <div class="card-actions" id="actions-p2">
-                        <button class="btn btn-add" onclick="event.stopPropagation(); addToCartNow('p2')">Add to Cart</button>
-                    </div>
-                </div>
-                <div class="product-card" id="p3" onclick="cardClicked(event,'p3')" data-name="Leather Bracelet" data-category="Bracelets">
-                    <img src="dummy.jpg" alt="Leather Bracelet">
-                    <h3>Leather Bracelet</h3>
-                    <p class="price">₹799</p>
-                    <div class="card-actions" id="actions-p3">
-                        <button class="btn btn-add" onclick="event.stopPropagation(); addToCartNow('p3')">Add to Cart</button>
-                    </div>
-                </div>
-                <div class="product-card" id="p4" onclick="cardClicked(event,'p4')" data-name="Combo Box Special" data-category="Combo Boxes">
-                    <img src="dummy.jpg" alt="Combo Box Special">
-                    <h3>Combo Box Special</h3>
-                    <p class="price">₹1999</p>
-                    <div class="card-actions" id="actions-p4">
-                        <button class="btn btn-add" onclick="event.stopPropagation(); addToCartNow('p4')">Add to Cart</button>
-                    </div>
-                </div>
+        <section id="home-section" class="section-card show p-0">
+            <div id="products" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                <!-- Products will be dynamically loaded here -->
+            </div>
+            <div id="no-products" class="hidden text-center text-gray-500 mt-10 p-4 border border-dashed rounded-xl">
+                No products found matching your search or filter.
             </div>
         </section>
 
         <!-- 2. Product Detail Section -->
-        <section id="product-details" class="section-card">
-            <button class="btn" onclick="backHome()" style="margin-bottom:12px">← Back to Shopping</button>
-            <div style="display:flex; gap:20px; flex-wrap:wrap;">
+        <section id="product-details" class="section-card p-6 bg-white rounded-xl shadow-lg">
+            <button class="text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1 mb-4 transition" onclick="backHome()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-left"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+                Back to Shopping
+            </button>
+            <div class="lg:flex lg:gap-8">
                 
-                <!-- NEW: Image Gallery Container (Now using scroll-snap) -->
-                <div class="gallery-container" id="detail-image-gallery">
-                    <!-- Images will be injected here by script.js -->
+                <!-- Image Gallery Container (Using scroll-snap) -->
+                <div class="gallery-container w-full max-w-sm lg:max-w-md bg-gray-50 shadow-inner rounded-xl mb-4 lg:mb-0">
+                    <!-- Images will be injected here -->
                 </div>
-                <!-- END NEW GALLERY -->
                 
-                <div>
-                    <h2 id="detail-name" style="margin-top:0;">Product Name</h2>
-                    <p id="detail-price" style="font-size:18px; font-weight:700;">Price: ₹0</p>
-                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
-                    <div style="display:flex; gap:10px; margin-top:20px;">
-                        <button class="btn btn-add" onclick="addToCart()">Add to Cart</button>
-                        <button class="btn buy" onclick="buyNow(window.selectedProduct.id)">Buy Now</button>
+                <div class="lg:flex-1">
+                    <h2 id="detail-name" class="text-3xl font-extrabold text-gray-900 mt-0 mb-2">Product Name</h2>
+                    <p id="detail-price" class="text-2xl font-bold text-red-600 mb-4">Price: ₹0</p>
+                    <p id="detail-description" class="text-gray-600 mb-6 leading-relaxed">Loading product description...</p>
+                    
+                    <h3 class="text-lg font-semibold text-gray-700 border-b pb-1 mb-4">Details</h3>
+                    <ul class="text-sm text-gray-500 list-disc list-inside space-y-1">
+                        <li>Material: High-quality plated alloy</li>
+                        <li>Shipping: Ships within 2-3 business days</li>
+                        <li>Warranty: 6 months against manufacturing defects</li>
+                    </ul>
+
+                    <div class="flex gap-4 mt-8">
+                        <button id="add-to-cart-btn" class="flex-1 px-6 py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition shadow-lg" onclick="addToCart()">
+                            Add to Cart
+                        </button>
+                        <button class="flex-1 px-6 py-3 bg-red-500 text-white font-semibold rounded-xl hover:bg-red-600 transition shadow-lg" onclick="buyNow(window.selectedProduct.id)">
+                            Buy Now
+                        </button>
                     </div>
                 </div>
             </div>
         </section>
 
         <!-- 3. Cart Section -->
-        <section id="cart-section" class="section-card">
-            <h2 style="margin-top:0;">🛒 Your Shopping Cart</h2>
-            <div id="cart-items">
-                <!-- Cart rows will be injected here by script.js -->
+        <section id="cart-section" class="section-card p-6 bg-white rounded-xl shadow-lg">
+            <h2 class="text-3xl font-extrabold text-gray-900 mb-6">🛒 Your Shopping Cart</h2>
+            <div id="cart-items" class="space-y-4">
+                <!-- Cart rows will be injected here -->
             </div>
-            <div class="cart-total">
-                Subtotal: ₹<span id="total">0</span>
+            
+            <div id="empty-cart-message" class="text-center text-gray-500 mt-10 p-4 border border-dashed rounded-xl hidden">
+                Your cart is empty. Time to find some beautiful accessories!
             </div>
-            <button class="btn buy" style="width:100%; margin-top:14px; padding:12px;" onclick="goToShipping()">Proceed to Checkout</button>
-            <button class="btn" style="width:100%; margin-top:8px;" onclick="backHome()">Continue Shopping</button>
+
+            <div class="cart-total flex justify-between items-center mt-6 pt-4 border-t-2 border-gray-100">
+                <div class="text-xl font-bold text-gray-800">Subtotal:</div>
+                <div class="text-2xl font-extrabold text-red-600">₹<span id="total">0</span></div>
+            </div>
+            
+            <button class="w-full mt-6 py-3 bg-red-500 text-white font-semibold rounded-xl hover:bg-red-600 transition shadow-lg" onclick="goToShipping()">
+                Proceed to Checkout
+            </button>
+            <button class="w-full mt-3 py-3 bg-gray-200 text-gray-800 font-semibold rounded-xl hover:bg-gray-300 transition" onclick="backHome()">
+                Continue Shopping
+            </button>
         </section>
 
         <!-- 4. Shipping Details Section (Checkout Step 1) -->
-        <section id="shipping-section" class="section-card">
-            <h2 style="margin-top:0;">🚚 Shipping Details</h2>
-            <div id="shipping-error" style="color:red; margin-bottom:10px; display:none;"></div>
-            <div class="input-row">
-                <label>Full Name*</label>
-                <input type="text" id="shipping-name" placeholder="John Doe">
+        <section id="shipping-section" class="section-card p-6 bg-white rounded-xl shadow-lg">
+            <h2 class="text-3xl font-extrabold text-gray-900 mb-6">🚚 Shipping Details</h2>
+            <div id="shipping-error" class="text-red-500 bg-red-100 p-3 rounded-lg mb-4 hidden"></div>
+            
+            <div class="space-y-4">
+                <div class="input-row">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Full Name*</label>
+                    <input type="text" id="shipping-name" placeholder="John Doe" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div class="input-row">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number*</label>
+                    <input type="tel" id="shipping-phone" placeholder="1111111111" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div class="input-row">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Full Address* (Street, City, Pin, State)</label>
+                    <textarea id="shipping-address" placeholder="123 Main St, New Delhi, 110001" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                </div>
+                <div class="input-row">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Landmark (Optional)</label>
+                    <input type="text" id="shipping-landmark" placeholder="Near Apollo Hospital" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
             </div>
-            <div class="input-row">
-                <label>Phone Number*</label>
-                <input type="tel" id="shipping-phone" placeholder="1111111111">
-            </div>
-            <div class="input-row">
-                <label>Full Address* (Street, City, Pin, State)</label>
-                <textarea id="shipping-address" placeholder="123 Main St, New Delhi, 110001"></textarea>
-            </div>
-            <div class="input-row">
-                <label>Landmark (Optional)</label>
-                <input type="text" id="shipping-landmark" placeholder="Near Apollo Hospital">
-            </div>
-            <button class="btn buy" style="width:100%; margin-top:14px; padding:12px;" onclick="confirmShippingDetails()">Continue to Payment →</button>
+            
+            <button class="w-full mt-6 py-3 bg-red-500 text-white font-semibold rounded-xl hover:bg-red-600 transition shadow-lg" onclick="confirmShippingDetails()">
+                Continue to Payment →
+            </button>
         </section>
 
         <!-- 5. Payment Section (Checkout Step 2) - UPI ONLY -->
-        <section id="payment-section" class="section-card">
-            <h2 style="margin-top:0;">💳 Payment</h2>
+        <section id="payment-section" class="section-card p-6 bg-white rounded-xl shadow-lg">
+            <h2 class="text-3xl font-extrabold text-gray-900 mb-6">💳 Payment</h2>
             
-            <div style="margin-bottom:15px; padding:12px; background:#f0f7ff; border-radius:8px; border:1px solid #cce0f0;">
-                <h4 style="margin-top:0; color:var(--primary);">Order Summary</h4>
-                <div id="checkout-items">
+            <div class="mb-6 p-4 bg-indigo-50 rounded-xl border border-indigo-200">
+                <h4 class="text-lg font-bold text-indigo-700 mt-0 mb-3">Order Summary</h4>
+                <div id="checkout-items" class="space-y-2 text-sm">
                     <!-- Checkout items will be injected here -->
                 </div>
-                <hr style="border:0; border-top:1px solid #ccc; margin:8px 0;">
-                <div style="display:flex; justify-content:space-between; font-weight:800; font-size:18px;">
+                <hr class="my-3 border-gray-200">
+                <div class="flex justify-between font-extrabold text-xl">
                     <div>Total Payable:</div>
-                    <div>₹<span id="checkout-total">0</span></div>
+                    <div class="text-red-600">₹<span id="checkout-total">0</span></div>
                 </div>
             </div>
 
-            <!-- Payment Methods: ONLY UPI REMAINS -->
-            <h4 style="margin-top:0;">Select Payment Method</h4>
-            <div style="display:grid; grid-template-columns:1fr; gap:10px;">
+            <h4 class="text-lg font-semibold text-gray-700 mb-3">Select Payment Method</h4>
+            <div class="grid grid-cols-1 gap-3">
                 <!-- UPI/SCAN OPTION -->
                 <label class="payment-card" onclick="selectPayment('upi')">
-                    <input type="radio" name="payment" value="upi" checked>
-                    <strong>UPI Scan / ID (Required)</strong>
+                    <input type="radio" name="payment" value="upi" checked class="mr-3 h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500">
+                    <div class="flex-1">
+                        <strong>UPI Scan / ID</strong>
+                        <div class="text-xs text-gray-500">Recommended for fastest processing.</div>
+                    </div>
                 </label>
             </div>
 
             <!-- UPI DETAILS BLOCK -->
-            <div id="upi-details" class="payment-details show" style="display:block;">
-                <div style="margin-bottom:8px;"><strong>Payment Target UPI ID</strong></div>
-                <!-- Readonly input for the destination UPI ID -->
-                <input id="upi-id" readonly style="padding:10px;border-radius:8px;border:1px solid #ddd;width:100%;font-weight:700;">
+            <div id="upi-details" class="mt-6 p-4 border border-dashed border-indigo-300 rounded-xl bg-indigo-50">
+                <div class="text-sm font-semibold text-gray-700 mb-2">Payment Target UPI ID</div>
+                <input id="upi-id" readonly value="owner-upi-id@bank" class="p-3 border border-indigo-300 bg-white rounded-lg w-full font-mono font-bold text-sm select-all cursor-text">
                 
-                <div style="margin-top:15px;font-weight:700;">Option 1: Scan & Pay</div>
-                <div style="margin-top:8px;display:flex;gap:12px;align-items:center;">
-                    <!-- QR Code Placeholder -->
-                    <div class="qr-placeholder" style="width:120px;height:120px;background:#fff;border:1px dashed #dedede;display:flex;align-items:center;justify-content:center;">QR</div>
-                    <div style="font-size:13px;color:#555">Scan this code with any UPI app (PhonePe, GPay, Paytm) to pay the exact amount.</div>
+                <div class="mt-4 font-semibold text-gray-700">Option 1: Scan & Pay</div>
+                <div class="mt-2 flex gap-4 items-center">
+                    <!-- QR Code Placeholder (Using a standard placeholder for simplicity) -->
+                    <div class="qr-placeholder w-28 h-28 bg-white border border-gray-300 rounded-md flex items-center justify-center text-xs text-gray-400 font-mono">QR Code</div>
+                    <div class="text-sm text-gray-600 flex-1">Scan this code with any UPI app (PhonePe, GPay, Paytm) to pay the exact amount.</div>
                 </div>
                 
-                <div style="margin-top:15px;font-weight:700;">Option 2: Mobile Deep Link</div>
-                <!-- Deep Link Button Placeholder -->
-                <div class="deep-link-box"></div> 
-                <div style="font-size:13px;color:#555;margin-top:5px;">Clicking this opens the payment directly in your installed UPI app.</div>
+                <div class="mt-4 font-semibold text-gray-700">Option 2: Mobile Deep Link</div>
+                <button id="deep-link-btn" class="w-full mt-2 py-3 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600 transition shadow-md" onclick="initiateDeepLinkPayment()">
+                    Open UPI App Now
+                </button> 
+                <div class="text-xs text-gray-500 mt-1">Clicking this attempts to open the payment directly in your installed UPI app.</div>
             </div>
             
-            <div id="payment-confirm" class="confirm-banner">
+            <div id="payment-confirm" class="confirm-banner mt-6 p-4 bg-green-100 border border-green-300 text-green-700 rounded-xl font-medium hidden">
                 Order Placed! Please ensure you complete the UPI payment. The owner will verify the transaction manually.
             </div>
 
-            <button class="btn buy" style="width:100%; margin-top:14px; padding:12px;" onclick="processPayment()">Proceed to Pay</button>
+            <button class="w-full mt-6 py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition shadow-lg" onclick="processPayment()">
+                Complete Order
+            </button>
         </section>
+
+        <!-- Loading Indicator Modal -->
+        <div id="loading-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+            <div class="bg-white p-6 rounded-xl shadow-2xl flex items-center gap-4">
+                <svg class="animate-spin h-6 w-6 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                <span id="loading-text" class="text-gray-700 font-medium">Processing...</span>
+            </div>
+        </div>
 
 
     </main>
 
     <!-- Account Drawer -->
-    <div id="account-drawer" aria-hidden="true">
-        <div class="drawer-header">
-            <h3 class="drawer-title">Account Access</h3>
-            <button class="close-drawer" onclick="toggleAccountDrawer()">✖</button>
+    <div id="account-drawer" class="fixed top-0 right-0 h-full w-full max-w-sm bg-white shadow-2xl z-40 transform translate-x-full transition-transform duration-300 overflow-y-auto" aria-hidden="true">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6 border-b pb-4">
+                <h3 class="text-2xl font-bold text-gray-800">Account Access</h3>
+                <button class="p-2 rounded-full hover:bg-gray-100 transition" onclick="toggleAccountDrawer()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+            </div>
+
+            <!-- Logged Out Block -->
+            <div id="account-logged-out" class="login-block">
+                <h4 class="text-xl font-semibold text-gray-700 mb-4">Sign In / Sign Up</h4>
+                
+                <button class="w-full py-3 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition mb-4 flex items-center justify-center gap-2" onclick="googleSignIn()">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/100px-Google_%22G%22_logo.svg.png" alt="Google" class="w-5 h-5">
+                    Sign in with Google
+                </button>
+                
+                <div class="relative flex justify-center my-4">
+                    <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-300"></div></div>
+                    <div class="relative bg-white px-2 text-sm text-gray-500">OR</div>
+                </div>
+                
+                <!-- Local Login Block -->
+                <div id="login-block" class="space-y-4">
+                    <div class="input-row">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email (for local account)</label>
+                        <input id="login-email" type="email" placeholder="guest@example.com" class="w-full p-3 border border-gray-300 rounded-lg">
+                    </div>
+                    <button class="w-full py-3 bg-indigo-500 text-white font-semibold rounded-xl hover:bg-indigo-600 transition" onclick="doLogin()">Local Sign In</button>
+                    <p class="text-center text-sm text-indigo-500 cursor-pointer hover:underline" onclick="showSignup()">
+                        Don't have a local account? Click here to sign up.
+                    </p>
+                </div>
+                
+                <!-- Local Signup Block -->
+                <div id="signup-block" class="space-y-4 hidden">
+                    <h5 class="text-lg font-semibold text-gray-700">Local Account Signup</h5>
+                    <div class="input-row"><label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label><input id="su-name" type="text" class="w-full p-3 border border-gray-300 rounded-lg"></div>
+                    <div class="input-row"><label class="block text-sm font-medium text-gray-700 mb-1">Email</label><input id="su-email" type="email" class="w-full p-3 border border-gray-300 rounded-lg"></div>
+                    <div class="input-row"><label class="block text-sm font-medium text-gray-700 mb-1">Phone</label><input id="su-phone" type="tel" class="w-full p-3 border border-gray-300 rounded-lg"></div>
+                    <div class="input-row"><label class="block text-sm font-medium text-gray-700 mb-1">Address</label><input id="su-address" type="text" class="w-full p-3 border border-gray-300 rounded-lg"></div>
+                    <div class="input-row"><label class="block text-sm font-medium text-gray-700 mb-1">Profile Picture (Optional)</label><input id="su-pic" type="file" accept="image/*" class="w-full p-2 border border-gray-300 rounded-lg text-sm"></div>
+                    <button class="w-full py-3 bg-red-500 text-white font-semibold rounded-xl hover:bg-red-600 transition" onclick="createAccount()">Create Local Account</button>
+                    <p class="text-center text-sm text-indigo-500 cursor-pointer hover:underline" onclick="hideSignup()">
+                        Already have an account? Log in.
+                    </p>
+                </div>
+
+            </div>
+
+            <!-- Logged In Block -->
+            <div id="account-logged-in" class="hidden">
+                <div class="flex items-center gap-4 p-4 bg-indigo-50 rounded-xl mb-6">
+                    <div id="profile-pic-box" class="profile-pic w-14 h-14 min-w-14 min-h-14 rounded-full flex items-center justify-center bg-gray-200 text-gray-700 font-bold text-xl overflow-hidden">
+                        <span id="profile-initials">A</span>
+                    </div>
+                    <div>
+                        <div id="account-name-display" class="font-bold text-lg text-gray-900">User Name</div>
+                        <div id="account-email-display" class="text-sm text-gray-500">user@email.com</div>
+                    </div>
+                </div>
+
+                <h4 class="text-xl font-semibold text-gray-700 mb-3">Update Profile</h4>
+                
+                <div class="space-y-4">
+                    <!-- Profile Edit Form -->
+                    <div class="input-row">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Profile Picture</label>
+                        <input id="pf-pic" type="file" accept="image/*" class="w-full p-2 border border-gray-300 rounded-lg text-sm">
+                        <p class="text-xs text-gray-400 mt-1">Upload an image to replace initials.</p>
+                    </div>
+                    <div class="input-row"><label class="block text-sm font-medium text-gray-700 mb-1">Full Name*</label><input id="pf-name" type="text" class="w-full p-3 border border-gray-300 rounded-lg"></div>
+                    <div class="input-row"><label class="block text-sm font-medium text-gray-700 mb-1">Email</label><input id="pf-email" type="email" disabled class="w-full p-3 border border-gray-300 rounded-lg bg-gray-100"></div>
+                    <div class="input-row"><label class="block text-sm font-medium text-gray-700 mb-1">Phone Number*</label><input id="pf-phone" type="tel" class="w-full p-3 border border-gray-300 rounded-lg"></div>
+                    <div class="input-row"><label class="block text-sm font-medium text-gray-700 mb-1">Address*</label><textarea id="pf-address" rows="3" class="w-full p-3 border border-gray-300 rounded-lg"></textarea></div>
+
+                    <div class="flex gap-3 pt-2">
+                        <button class="flex-1 py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition shadow-md" onclick="saveProfile()">Save Profile</button>
+                        <button class="py-3 px-6 bg-red-500 text-white font-semibold rounded-xl hover:bg-red-600 transition shadow-md" onclick="logout()">Log Out</button>
+                    </div>
+                    <p class="text-xs text-gray-500">*Required fields</p>
+                    <p class="text-xs text-gray-400 mt-4 break-words">Your User ID: <span id="current-user-id">...</span></p>
+
+                </div>
+            </div>
+
+            <footer class="text-center text-xs text-gray-400 mt-10 p-4 border-t border-gray-100">
+                © 2025 MS Accessories
+                <div class="mt-1">App Version 1.0</div>
+            </footer>
         </div>
-
-        <!-- Logged Out Block -->
-        <div id="account-logged-out" class="login-block">
-            <h4 style="margin-top:0;">Sign In / Sign Up</h4>
-            
-            <!-- Google Sign In -->
-            <button class="btn buy" onclick="googleSignIn()" style="width:100%; background-color:#DB4437; margin-bottom:10px;">
-                Sign in with Google
-            </button>
-            
-            <hr style="border:0; border-top:1px dashed #ccc;">
-            
-            <!-- Local Login Block -->
-            <div id="login-block" style="margin-top:15px;">
-                <div class="input-row">
-                    <label>Email (for local account)</label>
-                    <input id="login-email" type="email" placeholder="guest@example.com">
-                </div>
-                <button class="btn" onclick="doLogin()" style="width:100%;">Local Sign In</button>
-                <p class="small-muted" style="text-align:center; cursor:pointer;" onclick="showSignup()">
-                    Don't have a local account? Click here to sign up.
-                </p>
-            </div>
-            
-            <!-- Local Signup Block -->
-            <div id="signup-block" style="display:none; margin-top:15px;">
-                <h5 style="margin-top:0;">Local Account Signup</h5>
-                <div class="input-row"><label>Full Name</label><input id="su-name" type="text"></div>
-                <div class="input-row"><label>Email</label><input id="su-email" type="email"></div>
-                <div class="input-row"><label>Phone</label><input id="su-phone" type="tel"></div>
-                <div class="input-row"><label>Address</label><input id="su-address" type="text"></div>
-                <div class="input-row"><label>Profile Picture (Optional)</label><input id="su-pic" type="file" accept="image/*"></div>
-                <button class="btn buy" onclick="createAccount()" style="width:100%;">Create Local Account</button>
-                <p class="small-muted" style="text-align:center; cursor:pointer;" onclick="hideSignup()">
-                    Already have an account? Log in.
-                </p>
-            </div>
-
-        </div>
-
-        <!-- Logged In Block -->
-        <div id="account-logged-in" style="display:none;">
-            <div style="display:flex; align-items:center; gap:15px;">
-                <div id="profile-pic-box" class="profile-pic"><span id="profile-initials" style="font-weight:800;color:#666">A</span></div>
-                <div>
-                    <div id="account-name-display" style="font-weight:700; font-size:18px;">User Name</div>
-                    <div id="account-email-display" style="font-size:13px; color:#666;">user@email.com</div>
-                </div>
-            </div>
-
-            <h4 style="margin-top:20px; margin-bottom:10px;">Profile Details</h4>
-            
-            <div style="padding:15px; background:#f5f7fb; border-radius:10px;">
-                <!-- Profile Edit Form -->
-                <div class="input-row">
-                    <label>Profile Picture</label>
-                    <div id="profile-pic-edit" class="profile-pic" style="width:60px; height:60px; margin-bottom:5px;"></div>
-                    <input id="pf-pic" type="file" accept="image/*" style="padding:4px; font-size:13px;">
-                </div>
-                <div class="input-row"><label>Full Name*</label><input id="pf-name" type="text"></div>
-                <div class="input-row"><label>Email</label><input id="pf-email" type="email" disabled></div>
-                <div class="input-row"><label>Phone Number*</label><input id="pf-phone" type="tel"></div>
-                <div class="input-row"><label>Address*</label><textarea id="pf-address"></textarea></div>
-
-                <div class="drawer-actions">
-                    <button class="btn buy" onclick="saveProfile()">Save Profile</button>
-                    <button class="btn" onclick="logout()">Log Out</button>
-                </div>
-                <p class="small-muted">*Required fields</p>
-            </div>
-        </div>
-
-        <footer class="footer">
-            © 2025 MS Accessories
-            <div style="font-size:12px; margin-top:5px;">App Version 1.0</div>
-        </footer>
     </div>
 
-    <!-- External scripts needed for UPI QR code and functionality -->
-    <script type="module" src="script.js"></script>
+    <!-- JavaScript and Firebase Logic -->
+    <script type="module">
+        // --- Firebase Setup ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup, updateProfile, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, where, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // setLogLevel('Debug'); // Uncomment for debugging
+        
+        let db, auth, storage, userId;
+        let isAuthReady = false;
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        if (Object.keys(firebaseConfig).length) {
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            storage = getStorage(app);
+        } else {
+            console.error("Firebase config is missing. Application cannot connect to Firestore.");
+        }
+
+        const PROVIDER = new GoogleAuthProvider();
+
+        const PRODUCTS = [
+            { id: 'p1', name: 'Vintage Gold Chain', price: 1200, category: 'Necklace', images: ['https://placehold.co/350x300/FACC15/FFF?text=Gold+Chain+1', 'https://placehold.co/350x300/FACC15/FFF?text=Chain+Look+2', 'https://placehold.co/350x300/FACC15/FFF?text=Chain+Detail'], description: 'Elegant gold-plated chain with a vintage finish, perfect for layering.' },
+            { id: 'p2', name: 'Minimalist Silver Studs', price: 499, category: 'Earrings', images: ['https://placehold.co/350x300/9CA3AF/FFF?text=Silver+Studs+1', 'https://placehold.co/350x300/9CA3AF/FFF?text=Studs+Angle'], description: 'Small and subtle silver stud earrings with a hypoallergenic coating.' },
+            { id: 'p3', name: 'Braided Leather Band', price: 799, category: 'Bracelets', images: ['https://placehold.co/350x300/4B5563/FFF?text=Leather+Band'], description: 'Stylish genuine braided leather bracelet with a rugged, durable clasp.' },
+            { id: 'p4', name: 'Complete Combo Box', price: 1999, category: 'Combo Boxes', images: ['https://placehold.co/350x300/34D399/FFF?text=Combo+Set'], description: 'A curated box containing a necklace, a pair of studs, and a matching bracelet.' },
+            { id: 'p5', name: 'Rose Gold Bangle', price: 1550, category: 'Bracelets', images: ['https://placehold.co/350x300/FBCFE8/FFF?text=Rose+Bangle'], description: 'Sleek rose gold plated bangle, ideal for daily wear.' },
+        ];
+        
+        let cart = {}; // {productId: quantity}
+        let currentProfile = {}; // Store user profile data
+
+        window.selectedProduct = {};
+        window.currentSection = 'home';
+        
+        // --- Utility Functions ---
+
+        function showLoading(text = 'Processing...') {
+            document.getElementById('loading-text').textContent = text;
+            document.getElementById('loading-modal').classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading-modal').classList.add('hidden');
+        }
+
+        function showMessageModal(title, message) {
+            // Placeholder for a custom modal, since alert() is forbidden
+            console.log(`[MESSAGE] ${title}: ${message}`);
+            // In a real app, you would render a custom, styled modal here.
+            alert(`${title}\n\n${message}`);
+        }
+
+        const getUserProfileRef = (uid) => doc(db, 'artifacts', appId, 'users', uid, 'profile', 'data');
+        const getPublicOrderRef = () => collection(db, 'artifacts', appId, 'public', 'data', 'orders');
+        
+        // --- Authentication & Profile Logic ---
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                userId = user.uid;
+                // Fetch or initialize profile
+                await fetchUserProfile(userId);
+                updateAccountUI(user, true);
+            } else {
+                userId = crypto.randomUUID(); // Fallback UUID if anonymous sign-in fails or user is null
+                currentProfile = {};
+                updateAccountUI(null, false);
+            }
+            isAuthReady = true;
+            // Now that auth is ready, render initial content
+            renderProducts();
+            updateCartUI();
+            
+            // Set up cart listener only if user is authenticated/available
+            if (db && userId) {
+                 setupCartListener();
+            }
+        });
+        
+        async function fetchUserProfile(uid) {
+            if (!db) return;
+            try {
+                const docRef = getUserProfileRef(uid);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    currentProfile = docSnap.data();
+                } else {
+                    // Initialize minimum profile data from auth info
+                    currentProfile = {
+                        name: auth.currentUser.displayName || auth.currentUser.email || 'New User',
+                        email: auth.currentUser.email || 'N/A',
+                        phone: '',
+                        address: '',
+                        photoURL: auth.currentUser.photoURL || null
+                    };
+                    // Save initial profile to Firestore
+                    await setDoc(docRef, currentProfile);
+                }
+            } catch (e) {
+                console.error("Error fetching profile:", e);
+                showMessageModal("Error", "Could not load user profile.");
+            }
+        }
+
+        async function initAuth() {
+            if (!auth || !db) return;
+            try {
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Firebase auth failed:", error);
+                showMessageModal("Auth Error", `Failed to initialize session: ${error.message}`);
+            }
+        }
+        initAuth(); // Start the authentication process immediately
+
+        function updateAccountUI(user, loggedIn) {
+            const drawer = document.getElementById('account-drawer');
+            const loggedOutDiv = document.getElementById('account-logged-out');
+            const loggedInDiv = document.getElementById('account-logged-in');
+            const accountBubble = document.getElementById('account-bubble');
+
+            if (loggedIn && user) {
+                loggedOutDiv.classList.add('hidden');
+                loggedInDiv.classList.remove('hidden');
+
+                const displayName = currentProfile.name || user.displayName || user.email.split('@')[0];
+                const displayEmail = currentProfile.email || user.email;
+                const initials = displayName ? displayName.charAt(0).toUpperCase() : 'A';
+                
+                document.getElementById('current-user-id').textContent = userId;
+                document.getElementById('account-name-display').textContent = displayName;
+                document.getElementById('account-email-display').textContent = displayEmail;
+
+                // Update profile form
+                document.getElementById('pf-name').value = displayName;
+                document.getElementById('pf-email').value = displayEmail;
+                document.getElementById('pf-phone').value = currentProfile.phone || '';
+                document.getElementById('pf-address').value = currentProfile.address || '';
+
+                // Update bubble/profile picture
+                if (currentProfile.photoURL) {
+                    accountBubble.style.backgroundImage = `url(${currentProfile.photoURL})`;
+                    accountBubble.style.backgroundSize = 'cover';
+                    accountBubble.textContent = '';
+                } else {
+                    accountBubble.style.backgroundImage = 'none';
+                    accountBubble.textContent = initials;
+                }
+                
+            } else {
+                loggedOutDiv.classList.remove('hidden');
+                loggedInDiv.classList.add('hidden');
+                accountBubble.textContent = 'A';
+                accountBubble.style.backgroundImage = 'none';
+            }
+        }
+        
+        // --- CRUD Functions (Firebase) ---
+
+        function setupCartListener() {
+            if (!db || !userId) return;
+            const cartRef = doc(db, 'artifacts', appId, 'users', userId, 'cart', 'items');
+
+            onSnapshot(cartRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    cart = docSnap.data().items || {};
+                } else {
+                    cart = {}; // Cart document does not exist
+                }
+                updateCartUI();
+            }, (error) => {
+                console.error("Error listening to cart changes:", error);
+            });
+        }
+        
+        async function updateCartInDb() {
+            if (!db || !userId) return;
+            const cartRef = doc(db, 'artifacts', appId, 'users', userId, 'cart', 'items');
+            try {
+                await setDoc(cartRef, { items: cart }, { merge: true });
+            } catch (e) {
+                console.error("Error updating cart:", e);
+                showMessageModal("Error", "Could not save cart data.");
+            }
+        }
+
+        // --- Core App Logic ---
+
+        function showSection(sectionId) {
+            const sections = document.querySelectorAll('.section-card');
+            sections.forEach(sec => sec.classList.remove('show'));
+            document.getElementById(sectionId + '-section').classList.add('show');
+            window.currentSection = sectionId;
+
+            // Update category tabs visibility based on section
+            const categoryTabs = document.getElementById('category-tabs');
+            const searchBar = document.getElementById('search-bar');
+            if (sectionId === 'home') {
+                categoryTabs.classList.remove('hidden');
+                searchBar.classList.remove('hidden');
+            } else {
+                categoryTabs.classList.add('hidden');
+                searchBar.classList.add('hidden');
+            }
+        }
+        
+        window.backHome = () => showSection('home');
+        
+        window.enlargeLogo = (el) => {
+            el.classList.toggle('scale-150'); // Simple visual effect
+        };
+
+        window.renderProducts = (filteredProducts = PRODUCTS) => {
+            const productsGrid = document.getElementById('products');
+            const noProductsMsg = document.getElementById('no-products');
+            productsGrid.innerHTML = '';
+
+            if (filteredProducts.length === 0) {
+                noProductsMsg.classList.remove('hidden');
+                return;
+            } else {
+                noProductsMsg.classList.add('hidden');
+            }
+
+            filteredProducts.forEach(product => {
+                const card = document.createElement('div');
+                card.id = product.id;
+                card.setAttribute('data-name', product.name);
+                card.setAttribute('data-category', product.category);
+                card.className = 'product-card bg-white p-4 rounded-xl shadow-lg hover:shadow-xl transition duration-200 cursor-pointer flex flex-col justify-between';
+                card.onclick = (e) => cardClicked(e, product.id);
+
+                const imageSrc = product.images?.[0] || 'https://placehold.co/350x300/F43F5E/FFF?text=No+Image';
+
+                card.innerHTML = `
+                    <div class="flex-shrink-0">
+                        <img src="${imageSrc}" onerror="this.onerror=null; this.src='https://placehold.co/350x300/F43F5E/FFF?text=Image+Error';" alt="${product.name}" class="w-full h-36 object-contain rounded-lg mb-3">
+                    </div>
+                    <div class="flex-grow">
+                        <h3 class="text-lg font-semibold text-gray-800 truncate">${product.name}</h3>
+                        <p class="text-sm text-gray-500 mb-2">${product.category}</p>
+                        <p class="price text-xl font-bold text-red-600">₹${product.price.toLocaleString('en-IN')}</p>
+                    </div>
+                    <div class="card-actions mt-3">
+                        <button class="w-full py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition" 
+                                onclick="event.stopPropagation(); addToCartNow('${product.id}')">
+                            Add to Cart
+                        </button>
+                    </div>
+                `;
+                productsGrid.appendChild(card);
+            });
+        };
+
+        window.cardClicked = (event, productId) => {
+            event.stopPropagation();
+            window.selectedProduct = PRODUCTS.find(p => p.id === productId);
+            if (!window.selectedProduct) return;
+
+            // 1. Update Details
+            document.getElementById('detail-name').textContent = window.selectedProduct.name;
+            document.getElementById('detail-price').textContent = `Price: ₹${window.selectedProduct.price.toLocaleString('en-IN')}`;
+            document.getElementById('detail-description').textContent = window.selectedProduct.description;
+
+            // 2. Render Image Gallery (Scroll-Snap)
+            const gallery = document.getElementById('detail-image-gallery');
+            gallery.innerHTML = window.selectedProduct.images.map(imgSrc => `
+                <img src="${imgSrc}" 
+                     alt="${window.selectedProduct.name} image" 
+                     class="w-full max-w-sm h-72 object-contain bg-white rounded-lg p-1 border border-gray-100" 
+                     onerror="this.onerror=null; this.src='https://placehold.co/350x300/F43F5E/FFF?text=Image+Error';">
+            `).join('');
+
+            // 3. Show Section
+            showSection('product-details');
+        };
+
+        window.addToCartNow = (productId) => {
+            const product = PRODUCTS.find(p => p.id === productId);
+            if (!product) return;
+
+            cart[productId] = (cart[productId] || 0) + 1;
+            updateCartInDb();
+            showMessageModal("Added to Cart", `${product.name} added successfully! Total: ${cart[productId]}`);
+        };
+
+        window.addToCart = () => { // Used on detail page
+            if (!window.selectedProduct || !window.selectedProduct.id) return;
+            addToCartNow(window.selectedProduct.id);
+        };
+
+        window.updateQuantity = (productId, change) => {
+            const currentQty = cart[productId] || 0;
+            const newQty = currentQty + change;
+
+            if (newQty > 0) {
+                cart[productId] = newQty;
+            } else {
+                delete cart[productId];
+            }
+            updateCartInDb();
+        };
+
+        window.updateCartUI = () => {
+            const cartItemsContainer = document.getElementById('cart-items');
+            const totalElement = document.getElementById('total');
+            const cartCountElement = document.getElementById('cart-count');
+            const emptyMessage = document.getElementById('empty-cart-message');
+            
+            cartItemsContainer.innerHTML = '';
+            let total = 0;
+            let totalItems = 0;
+
+            const cartKeys = Object.keys(cart);
+
+            if (cartKeys.length === 0) {
+                emptyMessage.classList.remove('hidden');
+            } else {
+                emptyMessage.classList.add('hidden');
+            }
+
+            cartKeys.forEach(productId => {
+                const product = PRODUCTS.find(p => p.id === productId);
+                const quantity = cart[productId];
+                
+                if (product && quantity > 0) {
+                    const subtotal = product.price * quantity;
+                    total += subtotal;
+                    totalItems += quantity;
+
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'flex items-center gap-4 p-3 bg-gray-50 rounded-lg shadow-sm';
+                    itemDiv.innerHTML = `
+                        <img src="${product.images?.[0] || 'https://placehold.co/50x50'}" class="w-12 h-12 object-cover rounded-md flex-shrink-0" onerror="this.onerror=null; this.src='https://placehold.co/50x50';">
+                        <div class="flex-grow">
+                            <div class="font-semibold text-gray-800">${product.name}</div>
+                            <div class="text-sm text-gray-500">₹${product.price.toLocaleString('en-IN')} x ${quantity}</div>
+                        </div>
+                        <div class="font-bold text-red-600 flex-shrink-0">₹${subtotal.toLocaleString('en-IN')}</div>
+                        <div class="flex items-center gap-2 flex-shrink-0">
+                            <button onclick="updateQuantity('${productId}', -1)" class="w-8 h-8 bg-gray-200 rounded-full hover:bg-gray-300 transition">-</button>
+                            <span class="font-medium w-4 text-center">${quantity}</span>
+                            <button onclick="updateQuantity('${productId}', 1)" class="w-8 h-8 bg-indigo-500 text-white rounded-full hover:bg-indigo-600 transition">+</button>
+                        </div>
+                    `;
+                    cartItemsContainer.appendChild(itemDiv);
+                }
+            });
+
+            totalElement.textContent = total.toLocaleString('en-IN');
+            cartCountElement.textContent = totalItems;
+        };
+
+        window.searchProducts = () => {
+            const query = document.getElementById('search-bar').value.toLowerCase();
+            const filtered = PRODUCTS.filter(p => 
+                p.name.toLowerCase().includes(query) || p.description.toLowerCase().includes(query)
+            );
+            renderProducts(filtered);
+        };
+
+        window.filterCategory = (category) => {
+            const tabs = document.querySelectorAll('#category-tabs button');
+            tabs.forEach(btn => {
+                if (btn.getAttribute('data-category') === category) {
+                    btn.classList.add('bg-indigo-500', 'text-white');
+                    btn.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-indigo-100', 'hover:text-indigo-600');
+                } else {
+                    btn.classList.remove('bg-indigo-500', 'text-white');
+                    btn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-indigo-100', 'hover:text-indigo-600');
+                }
+            });
+            
+            const filtered = category === 'All' 
+                ? PRODUCTS 
+                : PRODUCTS.filter(p => p.category === category);
+            
+            renderProducts(filtered);
+        };
+        
+        // --- Account Drawer Functions ---
+        
+        window.toggleAccountDrawer = () => {
+            const drawer = document.getElementById('account-drawer');
+            const isHidden = drawer.classList.contains('translate-x-full');
+            if (isHidden) {
+                drawer.classList.remove('translate-x-full');
+            } else {
+                drawer.classList.add('translate-x-full');
+            }
+        };
+
+        window.showSignup = () => {
+            document.getElementById('login-block').classList.add('hidden');
+            document.getElementById('signup-block').classList.remove('hidden');
+        };
+
+        window.hideSignup = () => {
+            document.getElementById('login-block').classList.remove('hidden');
+            document.getElementById('signup-block').classList.add('hidden');
+        };
+
+        window.googleSignIn = async () => {
+            if (!auth) return;
+            showLoading("Signing in with Google...");
+            try {
+                await signInWithPopup(auth, PROVIDER);
+                toggleAccountDrawer();
+                showMessageModal("Success", "Signed in with Google successfully!");
+            } catch (error) {
+                console.error("Google Sign-In Error:", error);
+                showMessageModal("Sign-In Failed", `Error: ${error.message}`);
+            } finally {
+                hideLoading();
+            }
+        };
+
+        window.doLogin = async () => {
+             if (!auth) return;
+            const email = document.getElementById('login-email').value;
+            if (!email) { showMessageModal("Error", "Please enter an email."); return; }
+            
+            // Note: For local accounts without passwords, we must use `signInWithEmailAndPassword` 
+            // with a dummy password since Firebase requires one for email login.
+            // This is a common simplified pattern for "passwordless" demos.
+            const dummyPassword = 'password123';
+            showLoading("Logging in...");
+            try {
+                await signInWithEmailAndPassword(auth, email, dummyPassword);
+                toggleAccountDrawer();
+                showMessageModal("Success", `Welcome back, ${email.split('@')[0]}!`);
+            } catch (error) {
+                console.error("Local Login Error:", error);
+                showMessageModal("Login Failed", "Email or password incorrect. Did you sign up first?");
+            } finally {
+                hideLoading();
+            }
+        };
+
+        window.createAccount = async () => {
+            if (!auth) return;
+            const email = document.getElementById('su-email').value;
+            const name = document.getElementById('su-name').value;
+            const phone = document.getElementById('su-phone').value;
+            const address = document.getElementById('su-address').value;
+            const fileInput = document.getElementById('su-pic');
+            const dummyPassword = 'password123';
+
+            if (!email || !name || !phone || !address) {
+                showMessageModal("Error", "Please fill in all required fields.");
+                return;
+            }
+
+            showLoading("Creating account...");
+            try {
+                // 1. Create User
+                const userCredential = await createUserWithEmailAndPassword(auth, email, dummyPassword);
+                const user = userCredential.user;
+                
+                // 2. Handle Profile Picture Upload (if file selected)
+                let photoURL = null;
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    const storageRef = ref(storage, `profile_pics/${user.uid}/${file.name}`);
+                    await uploadBytes(storageRef, file);
+                    photoURL = await getDownloadURL(storageRef);
+                }
+
+                // 3. Update Auth Profile
+                await updateProfile(user, { displayName: name, photoURL: photoURL });
+
+                // 4. Save Additional Profile Data to Firestore
+                const profileData = {
+                    name: name,
+                    email: email,
+                    phone: phone,
+                    address: address,
+                    photoURL: photoURL
+                };
+                await setDoc(getUserProfileRef(user.uid), profileData);
+                
+                showMessageModal("Success", "Account created and logged in!");
+                toggleAccountDrawer();
+            } catch (error) {
+                console.error("Signup Error:", error);
+                showMessageModal("Signup Failed", `Error: ${error.message}`);
+            } finally {
+                hideLoading();
+            }
+        };
+        
+        window.saveProfile = async () => {
+            if (!auth || !userId) { showMessageModal("Error", "You must be logged in to save your profile."); return; }
+
+            const name = document.getElementById('pf-name').value;
+            const phone = document.getElementById('pf-phone').value;
+            const address = document.getElementById('pf-address').value;
+            const fileInput = document.getElementById('pf-pic');
+
+            if (!name || !phone || !address) {
+                showMessageModal("Error", "Full Name, Phone, and Address are required.");
+                return;
+            }
+
+            showLoading("Saving profile...");
+            try {
+                let photoURL = currentProfile.photoURL;
+
+                // 1. Handle Profile Picture Upload (if file selected)
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    const storageRef = ref(storage, `profile_pics/${userId}/${file.name}`);
+                    await uploadBytes(storageRef, file);
+                    photoURL = await getDownloadURL(storageRef);
+                }
+                
+                // 2. Update Auth Profile (Name and Photo URL only)
+                await updateProfile(auth.currentUser, { displayName: name, photoURL: photoURL });
+
+                // 3. Update Firestore Profile
+                const profileUpdate = {
+                    name: name,
+                    phone: phone,
+                    address: address,
+                    photoURL: photoURL
+                };
+                await updateDoc(getUserProfileRef(userId), profileUpdate);
+
+                // Re-fetch profile to update UI immediately
+                await fetchUserProfile(userId);
+                updateAccountUI(auth.currentUser, true);
+
+                showMessageModal("Success", "Profile updated successfully!");
+                toggleAccountDrawer();
+
+            } catch (error) {
+                console.error("Save Profile Error:", error);
+                showMessageModal("Save Failed", `Error: ${error.message}`);
+            } finally {
+                hideLoading();
+            }
+        };
+
+        window.logout = async () => {
+            if (!auth) return;
+            try {
+                await signOut(auth);
+                // After signOut, onAuthStateChanged will handle the UI update (switching to logged out)
+                showMessageModal("Logged Out", "You have been logged out.");
+                toggleAccountDrawer();
+                // Sign in anonymously again immediately to maintain a session
+                await signInAnonymously(auth); 
+            } catch (error) {
+                console.error("Logout Error:", error);
+                showMessageModal("Error", "Could not log out.");
+            }
+        };
+        
+        // --- Checkout Logic ---
+
+        window.buyNow = (productId) => {
+            cart = { [productId]: 1 };
+            updateCartInDb();
+            goToShipping();
+        };
+
+        window.goToShipping = () => {
+            if (Object.keys(cart).length === 0) {
+                showMessageModal("Cart Empty", "Your cart is empty. Please add items before checking out.");
+                return;
+            }
+            // Prefill shipping form if profile exists
+            document.getElementById('shipping-name').value = currentProfile.name || '';
+            document.getElementById('shipping-phone').value = currentProfile.phone || '';
+            document.getElementById('shipping-address').value = currentProfile.address || '';
+
+            showSection('shipping');
+        };
+
+        let currentOrder = null; // Store order details temporarily for payment step
+
+        window.confirmShippingDetails = () => {
+            const name = document.getElementById('shipping-name').value.trim();
+            const phone = document.getElementById('shipping-phone').value.trim();
+            const address = document.getElementById('shipping-address').value.trim();
+            const landmark = document.getElementById('shipping-landmark').value.trim();
+            const errorDiv = document.getElementById('shipping-error');
+            
+            errorDiv.classList.add('hidden');
+            if (!name || !phone || !address) {
+                errorDiv.textContent = "Please fill in all required fields (Name, Phone, Address).";
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            // Create order object
+            const orderItems = Object.keys(cart).map(id => {
+                const p = PRODUCTS.find(prod => prod.id === id);
+                return {
+                    id: id,
+                    name: p ? p.name : 'Unknown Product',
+                    price: p ? p.price : 0,
+                    quantity: cart[id]
+                };
+            });
+            
+            const total = orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            
+            currentOrder = {
+                userId: userId,
+                shipping: { name, phone, address, landmark },
+                items: orderItems,
+                total: total,
+                status: 'Pending Payment',
+                timestamp: new Date().toISOString()
+            };
+
+            // Update checkout summary
+            const checkoutItemsContainer = document.getElementById('checkout-items');
+            checkoutItemsContainer.innerHTML = orderItems.map(item => `
+                <div class="flex justify-between text-gray-700">
+                    <span class="truncate pr-2">${item.name} (x${item.quantity})</span>
+                    <span class="font-medium text-right">₹${(item.price * item.quantity).toLocaleString('en-IN')}</span>
+                </div>
+            `).join('');
+            document.getElementById('checkout-total').textContent = total.toLocaleString('en-IN');
+            
+            showSection('payment');
+            
+            // Initiate deep link setup (must be done after total is set)
+            setupDeepLink(total);
+        };
+
+        window.selectPayment = (method) => {
+            // Only UPI exists, so this is mostly for future proofing/visual confirmation
+            const upiDetails = document.getElementById('upi-details');
+            if (method === 'upi') {
+                upiDetails.style.display = 'block';
+            } else {
+                upiDetails.style.display = 'none';
+            }
+        };
+        
+        function setupDeepLink(amount) {
+            const upiId = document.getElementById('upi-id').value;
+            const deepLinkBtn = document.getElementById('deep-link-btn');
+            
+            const encodedVpa = encodeURIComponent(upiId);
+            const encodedName = encodeURIComponent("MS Accessories Store");
+            const encodedTxnId = crypto.randomUUID().replace(/-/g, '').substring(0, 15);
+            
+            const url = `upi://pay?pa=${encodedVpa}&pn=${encodedName}&mc=0000&tid=${encodedTxnId}&tr=${encodedTxnId}&am=${amount}.00&cu=INR`;
+            
+            deepLinkBtn.onclick = () => window.open(url, '_blank');
+        }
+
+        window.processPayment = async () => {
+            if (!currentOrder) {
+                showMessageModal("Error", "Order details missing. Please restart checkout.");
+                return;
+            }
+            
+            showLoading("Placing order and confirming payment...");
+            
+            try {
+                // 1. Save order to Firestore (Public orders collection)
+                currentOrder.status = 'Placed - Awaiting UPI Verification';
+                await setDoc(doc(getPublicOrderRef()), currentOrder);
+                
+                // 2. Clear local cart and update DB
+                cart = {};
+                await updateCartInDb();
+                
+                // 3. Update UI
+                document.getElementById('payment-confirm').classList.remove('hidden');
+                
+                showMessageModal("Order Placed!", `Your order (Total: ₹${currentOrder.total.toLocaleString('en-IN')}) has been placed. Please complete the UPI payment.`);
+                
+            } catch (error) {
+                console.error("Order Placement Error:", error);
+                showMessageModal("Placement Failed", `Could not place the order. Error: ${error.message}`);
+            } finally {
+                hideLoading();
+            }
+        };
+        
+        // Initialize the view and trigger initial data load
+        window.onload = () => {
+            showSection('home');
+            // Data listeners (like setupCartListener) are started after auth state is determined in onAuthStateChanged
+            // The initial call to renderProducts is also inside onAuthStateChanged
+        };
+        
+    </script>
 
 </body>
 </html>
