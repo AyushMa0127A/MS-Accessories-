@@ -2,7 +2,7 @@
 // BASIC SHOP DATA
 // -----------------------------
 const OWNER_WHATSAPP = "919088903069";
-const OWNER_UPI_ID = "ayush.mallick2010ail.com@oksbi";
+const OWNER_UPI_ID = "solanki.das.sm@oksbi";
 const OWNER_NAME = "MS Accessories";
 
 const PRODUCTS = {
