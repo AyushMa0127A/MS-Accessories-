@@ -1,12 +1,12 @@
 // -----------------------------
 // BASIC SHOP DATA
 // -----------------------------
-
+const OWNER_WHATSAPP = "919088903069";
 const OWNER_UPI_ID = "ayush.mallick2010ail.com@oksbi";
 const OWNER_NAME = "MS Accessories";
 
 const PRODUCTS = {
-  p1:{id:'p1',name:'Gold Necklace',price:1200,image:'dummy.jpg',category:'Necklace'},
+  p1:{id:'p1',name:'Gold Necklace',price:1,image:'dummy.jpg',category:'Necklace'},
   p2:{id:'p2',name:'Silver Earrings',price:499,image:'dummy.jpg',category:'Earrings'},
   p3:{id:'p3',name:'Leather Bracelet',price:799,image:'dummy.jpg',category:'Bracelets'},
   p4:{id:'p4',name:'Combo Box Special',price:1999,image:'dummy.jpg',category:'Combo Boxes'}
@@ -163,7 +163,30 @@ window.goToShipping=function(){
 // -----------------------------
 // PAYMENT SETUP
 // -----------------------------
+window.confirmShippingDetails=function(){
 
+const name=document.getElementById("shipping-name").value.trim();
+const phone=document.getElementById("shipping-phone").value.trim();
+const address=document.getElementById("shipping-address").value.trim();
+
+if(name===""){
+alert("Please enter your name");
+return;
+}
+
+if(!/^[0-9]{10}$/.test(phone)){
+alert("Please enter a valid 10 digit phone number");
+return;
+}
+
+if(address===""){
+alert("Please enter your full address");
+return;
+}
+
+proceedToPaymentSetup();
+
+}
 window.proceedToPaymentSetup=function(){
 
     showSection("payment");
@@ -241,15 +264,19 @@ window.processPayment=function(){
 
 window.searchProducts=function(){
 
-    const term=document.getElementById("search-bar").value.toLowerCase();
+const term=document.getElementById("search-bar").value.toLowerCase();
 
-    document.querySelectorAll(".product-card").forEach(c=>{
+document.querySelectorAll(".product-card").forEach(card=>{
 
-        const name=c.getAttribute("data-name").toLowerCase();
+const name=card.querySelector("h3").innerText.toLowerCase();
 
-        c.style.display=name.includes(term)?"block":"none";
+if(name.includes(term)){
+card.style.display="block";
+}else{
+card.style.display="none";
+}
 
-    });
+});
 
 }
 
@@ -309,10 +336,53 @@ function payWithUPI(){
 
 let total=document.getElementById("checkout-total").innerText;
 
-let orderName="MS Accessories Order";
+let name=document.getElementById("shipping-name").value;
+let phone=document.getElementById("shipping-phone").value;
+let address=document.getElementById("shipping-address").value;
 
-let upiLink=`upi://pay?pa=ayush.mallick2010ail.com@oksbi&pn=MS Accessories&tn=${orderName}&am=${total}&cu=INR`;
+let items="";
+
+cart.forEach(i=>{
+items+=`${i.name} x${i.quantity} - ₹${i.price*i.quantity}\n`;
+});
+
+let message=
+`New Order - MS Accessories
+
+Name: ${name}
+Phone: ${phone}
+
+Address:
+${address}
+
+Items:
+${items}
+
+Total: ₹${total}
+
+Payment completed via UPI`;
+
+let encodedMessage=encodeURIComponent(message);
+
+let whatsappLink=`https://wa.me/919088903069?text=${encodedMessage}`;
+
+let upiLink=`upi://pay?pa=${OWNER_UPI_ID}&pn=${OWNER_NAME}&am=${total}&cu=INR`;
 
 window.location.href=upiLink;
+
+setTimeout(()=>{
+window.location.href=whatsappLink;
+},6000);
+
+}
+function confirmOrderSent(){
+
+alert("Order confirmed! Thank you for shopping with MS Accessories.");
+
+cart=[];
+saveCart();
+renderCart();
+
+showSection("home");
 
 }
